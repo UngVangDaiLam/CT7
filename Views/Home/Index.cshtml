@@ -1,0 +1,378 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "HNTS - Trang chủ";
+}
+
+<div id="login-page" style="display:none;"></div>
+
+<!-- ============================================================
+     MODAL ĐĂNG NHẬP
+     ============================================================ -->
+<div id="login-modal-overlay" class="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
+    <div class="login-modal-box">
+
+        <button class="login-modal-close" id="login-modal-close" type="button" aria-label="Đóng">✕</button>
+
+        <div class="login-logo">
+            <div class="logo-icon">🛍️</div>
+            <h2>HNTS</h2>
+            <p>Mua sắm dễ dàng, giá tốt mỗi ngày</p>
+        </div>
+
+        <form class="login-form" id="login-form" novalidate>
+            <div class="form-group">
+                <label for="username">Tên đăng nhập</label>
+                <div class="input-wrap">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="username" name="username"
+                           placeholder="Nhập tên đăng nhập"
+                           autocomplete="username" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" name="password"
+                           placeholder="Nhập mật khẩu"
+                           autocomplete="current-password" required />
+                </div>
+            </div>
+
+            <div class="login-error" id="login-error"></div>
+
+            <button type="submit" class="login-btn" id="login-btn">
+                Đăng nhập →
+            </button>
+        </form>
+
+        <div class="login-hint">
+            <p>
+                <strong>Admin:</strong> admin / 123456<br />
+                <strong>User:</strong> user / 123456
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================================
+     TRANG HOME / USER
+     ============================================================ -->
+<section id="user-page" class="page-section">
+
+    <!-- TOP BAR -->
+    <div class="home-topbar">
+        <div class="container home-topbar-inner">
+            <div class="topbar-left">
+                <span>📞 Hotline: <strong>0987 954 313</strong></span>
+                <span>💬 Chat ngay</span>
+                <span>📍 Giao hàng toàn quốc</span>
+            </div>
+
+            <div class="topbar-right">
+                <span>🔄 Đổi trả 7 ngày</span>
+                <span>🚚 Miễn phí đơn từ 500K</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="home-header">
+        <div class="container home-header-inner">
+            <a href="/" class="home-logo">
+                <div class="home-logo-mark">🛍️</div>
+                <div>
+                    <strong>HNTS</strong>
+                    <span>Mua sắm dễ dàng</span>
+                </div>
+            </a>
+
+            <nav class="home-menu">
+                <a href="/" class="active">Trang chủ</a>
+                <a href="#products-section">Sản phẩm</a>
+                <a href="#promo-section">Khuyến mãi</a>
+                <a href="#home-about">Giới thiệu</a>
+                <a href="#home-footer">Liên hệ</a>
+            </nav>
+
+            <div class="home-actions">
+                <div class="home-search">
+                    <span>🔍</span>
+                    <input type="search" placeholder="Tìm kiếm sản phẩm..." />
+                </div>
+
+                <button class="home-icon-btn" type="button" title="Yêu thích">♡</button>
+
+                <button class="home-icon-btn nav-cart-btn" type="button" title="Giỏ hàng">
+                    🛒
+                    <span class="cart-count" id="cart-count" style="display:none;">0</span>
+                </button>
+
+                <div id="nav-login-wrap">
+                    <button class="home-login-btn" id="nav-login-btn" type="button">
+                        🔑 Đăng nhập
+                    </button>
+                </div>
+
+                <div id="nav-logout-wrap" style="display:none;">
+                    <span id="nav-username" class="nav-username-text"></span>
+                    <button class="home-login-btn" id="user-logout-btn" type="button">
+                        Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <button class="hamburger" id="hamburger" aria-label="Mở menu" aria-expanded="false" type="button">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- CATEGORY NAV -->
+    <div class="home-category-nav">
+        <div class="container home-category-inner">
+            <a href="#">👗 Thời trang</a>
+            <a href="#">👟 Giày dép</a>
+            <a href="#">👜 Túi xách</a>
+            <a href="#">⌚ Đồng hồ</a>
+            <a href="#">🕶️ Kính mắt</a>
+            <a href="#">🎒 Balo</a>
+            <a href="#">🧢 Mũ nón</a>
+            <a href="#">🌟 Hot Deal</a>
+        </div>
+    </div>
+
+    <div class="user-scroll-wrap" id="user-scroll-wrap">
+
+        <!-- HERO -->
+        <section class="aquarium-hero">
+            <div class="aquarium-overlay"></div>
+
+            <div class="container aquarium-hero-inner">
+                <div class="hero-copy">
+                    <div class="hero-status">● CỬA HÀNG ĐANG MỞ CỬA</div>
+
+                    <p class="hero-welcome">Welcome to</p>
+
+                    <h1>
+                        HNTS <span>STORE</span>
+                    </h1>
+
+                    <p class="hero-desc">
+                        Chuyên cung cấp sản phẩm thời trang, phụ kiện và các mặt hàng hot trend.
+                        Mua sắm dễ dàng, giá tốt mỗi ngày, giao hàng nhanh toàn quốc.
+                    </p>
+
+                    <div class="hero-actions">
+                        <button class="hero-main-btn" id="hero-cta" type="button">
+                            Khám phá ngay →
+                        </button>
+
+                        <div class="hero-hotline">
+                            <div class="hotline-icon">☎</div>
+                            <div>
+                                <span>Hotline 24/7</span>
+                                <strong>0987 954 313</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROMO -->
+        <section id="promo-section" class="home-benefits">
+            <div class="container home-benefits-grid">
+                <div class="benefit-item">
+                    <span>🚚</span>
+                    <div>
+                        <strong>Miễn phí vận chuyển</strong>
+                        <p>Cho đơn hàng từ 500K</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <span>🔄</span>
+                    <div>
+                        <strong>Đổi trả 7 ngày</strong>
+                        <p>Hoàn tiền nếu sản phẩm lỗi</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <span>💳</span>
+                    <div>
+                        <strong>Thanh toán bảo mật</strong>
+                        <p>Nhiều phương thức tiện lợi</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <span>🎁</span>
+                    <div>
+                        <strong>Ưu đãi thành viên</strong>
+                        <p>Nhiều voucher hấp dẫn</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABOUT -->
+        <section id="home-about" class="home-about">
+            <div class="container home-about-inner">
+                <div>
+                    <span class="section-tag">Về HNTS</span>
+                    <h2>Mua sắm nhanh, đẹp và tiện lợi</h2>
+                    <p>
+                        HNTS hướng đến trải nghiệm mua sắm hiện đại với giao diện dễ dùng,
+                        sản phẩm rõ ràng, trạng thái tồn kho minh bạch và giỏ hàng tiện lợi.
+                    </p>
+                </div>
+
+                <div class="about-stats">
+                    <div>
+                        <strong>10K+</strong>
+                        <span>Sản phẩm</span>
+                    </div>
+                    <div>
+                        <strong>50K+</strong>
+                        <span>Khách hàng</span>
+                    </div>
+                    <div>
+                        <strong>99%</strong>
+                        <span>Hài lòng</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRODUCTS -->
+        <main>
+            <section id="products-section" class="section home-products-section">
+                <div class="container">
+                    <header class="section-header">
+                        <div class="section-tag">🛒 Sản phẩm</div>
+                        <h2>Sản phẩm nổi bật</h2>
+                        <p>Những sản phẩm được yêu thích nhất, chọn lọc kỹ lưỡng cho bạn</p>
+                    </header>
+
+                    <div class="row row-cols-10 g-3" id="product-grid" role="list" aria-label="Danh sách sản phẩm">
+                        <!-- Products injected by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="footer home-footer" id="home-footer" role="contentinfo">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <div class="logo-text">🛍️ HNTS</div>
+                        <p>
+                            Website mua sắm trực tuyến hiện đại, hỗ trợ xem sản phẩm,
+                            thêm giỏ hàng, đánh giá sản phẩm và quản lý trạng thái hàng hóa.
+                        </p>
+
+                        <div class="footer-socials">
+                            <a href="#" class="social-btn" aria-label="Facebook">📘</a>
+                            <a href="#" class="social-btn" aria-label="Instagram">📸</a>
+                            <a href="#" class="social-btn" aria-label="TikTok">🎵</a>
+                            <a href="#" class="social-btn" aria-label="YouTube">▶️</a>
+                        </div>
+                    </div>
+
+                    <div class="footer-col">
+                        <h4>Liên kết nhanh</h4>
+                        <ul>
+                            <li><a href="/">Trang chủ</a></li>
+                            <li><a href="#products-section">Sản phẩm</a></li>
+                            <li><a href="#promo-section">Khuyến mãi</a></li>
+                            <li><a href="#home-about">Về chúng tôi</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col footer-contact">
+                        <h4>Liên hệ</h4>
+                        <p><span class="icon">📍</span>123 Đường Lê Lợi, TP.HCM</p>
+                        <p><span class="icon">📞</span>0987 954 313</p>
+                        <p><span class="icon">✉️</span>support@hnts.vn</p>
+                        <p><span class="icon">🕐</span>8:00 – 22:00 mỗi ngày</p>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <p>© 2026 HNTS. Tất cả quyền được bảo lưu.</p>
+                    <p>Được tạo với <span class="heart">❤️</span> tại Việt Nam</p>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+</section>
+
+<!-- ============================================================
+     CART DRAWER
+     ============================================================ -->
+<div id="cart-drawer-overlay" class="cart-drawer-overlay"></div>
+
+<div id="cart-drawer" class="cart-drawer" role="dialog" aria-modal="true" aria-label="Giỏ hàng">
+    <div class="cart-drawer-header">
+        <h3>🛒 Giỏ hàng của bạn</h3>
+        <button class="cart-drawer-close" id="cart-drawer-close" type="button" aria-label="Đóng">✕</button>
+    </div>
+
+    <div class="cart-drawer-body" id="cart-drawer-items">
+        <!-- Sản phẩm trong giỏ hàng sẽ được render bằng JS -->
+    </div>
+
+    <div class="cart-drawer-footer">
+        <div class="cart-total-wrap">
+            <span>Tổng tiền:</span>
+            <span class="cart-total-price" id="cart-total-price">0đ</span>
+        </div>
+
+        <button class="btn-checkout" id="btn-checkout" type="button">
+            Thanh toán ngay
+        </button>
+    </div>
+</div>
+
+<!-- ============================================================
+     REVIEW MODAL
+     ============================================================ -->
+<div id="review-modal-overlay" class="review-modal-overlay">
+    <div class="review-modal-box">
+
+        <button class="review-modal-close" type="button" onclick="closeReviewModal()">✕</button>
+
+        <h3>💬 Đánh giá sản phẩm</h3>
+        <p id="review-product-name" class="review-product-name"></p>
+
+        <div class="review-form-group">
+            <label for="review-rating">Số sao</label>
+            <select id="review-rating">
+                <option value="5">★★★★★ - Rất tốt</option>
+                <option value="4">★★★★☆ - Tốt</option>
+                <option value="3">★★★☆☆ - Bình thường</option>
+                <option value="2">★★☆☆☆ - Chưa tốt</option>
+                <option value="1">★☆☆☆☆ - Tệ</option>
+            </select>
+        </div>
+
+        <div class="review-form-group">
+            <label for="review-comment">Bình luận</label>
+            <textarea id="review-comment" rows="4" placeholder="Viết cảm nhận của bạn về sản phẩm..."></textarea>
+        </div>
+
+        <button class="review-submit-btn" type="button" onclick="submitReview()">
+            Gửi đánh giá
+        </button>
+
+        <div class="review-list-title">Các đánh giá trước đó</div>
+        <div id="review-list" class="review-list"></div>
+
+    </div>
+</div>

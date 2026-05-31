@@ -1,0 +1,197 @@
+﻿<!-- ============================================================
+     MÀN HÌNH NGƯỜI DÙNG (USER)
+     ============================================================ -->
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "HNTS - Người dùng";
+}
+<section id="user-page" class="page-section ">
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="user-navbar" role="navigation" aria-label="Điều hướng chính">
+        <div class="container navbar-inner">
+            <a href="#" class="nav-logo" aria-label="HNTS Trang chủ" onclick="return false;">
+                🛍️ HomNayToi<span class="dot">Suy</span>
+            </a>
+            <ul class="nav-links" id="nav-links" role="list">
+                <li><a href="#" onclick="scrollUserTop()">Trang chủ</a></li>
+                <li><a href="#" id="nav-products">Sản phẩm</a></li>
+                <li><a href="#promo-section">Khuyến mãi</a></li>
+                <li>
+                    <a href="#" class="nav-cart-btn" aria-label="Giỏ hàng">
+                        🛒 Giỏ hàng
+                        <span class="cart-count" id="cart-count" style="display:none">0</span>
+                    </a>
+                </li>
+                <!-- Hiển thị khi chưa đăng nhập -->
+                <li id="nav-login-wrap">
+                    <button class="nav-login-btn" id="nav-login-btn" type="button">🔑 Đăng nhập</button>
+                </li>
+                <!-- Hiển thị khi đã đăng nhập -->
+                <li id="nav-logout-wrap" style="display:none;">
+                    <span id="nav-username" class="nav-username-text"></span>
+                    <button class="nav-logout" id="user-logout-btn" type="button">Đăng xuất</button>
+                </li>
+            </ul>
+            <button class="hamburger" id="hamburger" aria-label="Mở menu" aria-expanded="false" type="button">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- HERO BANNER -->
+    <div class="user-scroll-wrap" id="user-scroll-wrap">
+        <section class="hero" role="banner">
+            <div class="hero-bg-art"></div>
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge">✨ Ưu đãi hàng ngày</div>
+                    <h1>
+                        Mua sắm dễ dàng,
+                        <span class="highlight">giá tốt mỗi ngày</span>
+                    </h1>
+                    <p>
+                        Khám phá hàng ngàn sản phẩm chất lượng cao với giá cả phải chăng.
+                        Giao hàng nhanh, đổi trả miễn phí trong 30 ngày.
+                    </p>
+                    <div class="hero-btns">
+                        <button class="btn-primary" id="hero-cta" type="button">Xem sản phẩm 👇</button>
+                        <button class="btn-secondary" type="button">Ưu đãi hôm nay 🔥</button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-num">10K<span>+</span></div>
+                            <div class="stat-label">Sản phẩm</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-num">50K<span>+</span></div>
+                            <div class="stat-label">Khách hàng</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-num">99<span>%</span></div>
+                            <div class="stat-label">Hài lòng</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROMOTIONS BANNER -->
+        <section id="promo-section" class="promo-banner">
+            <div class="container">
+                <div class="row g-3 align-items-center justify-content-between">
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <span style="font-size:2rem;">🚚</span>
+                            <div>
+                                <div class="fw-bold">Miễn phí vận chuyển</div>
+                                <div style="font-size:.85rem;color:#6b6b8a;">Cho đơn hàng từ 500K</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <span style="font-size:2rem;">🔄</span>
+                            <div>
+                                <div class="fw-bold">Đổi trả 30 ngày</div>
+                                <div style="font-size:.85rem;color:#6b6b8a;">Hoàn tiền 100% nếu lỗi</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <span style="font-size:2rem;">💳</span>
+                            <div>
+                                <div class="fw-bold">Thanh toán bảo mật</div>
+                                <div style="font-size:.85rem;color:#6b6b8a;">Mã hóa SSL 256-bit</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <span style="font-size:2rem;">🎁</span>
+                            <div>
+                                <div class="fw-bold">Quà tặng hấp dẫn</div>
+                                <div style="font-size:.85rem;color:#6b6b8a;">Ưu đãi thành viên VIP</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORY ROW 10 CỘT BOOTSTRAP -->
+        <div class="container-fluid py-3" style="background:#fff8f4;border-bottom:1px solid #ffe4d0;">
+            <div class="row g-2 text-center">
+                <div class="col"><div class="cat-chip">👗 Thời trang</div></div>
+                <div class="col"><div class="cat-chip">👟 Giày dép</div></div>
+                <div class="col"><div class="cat-chip">👜 Túi xách</div></div>
+                <div class="col"><div class="cat-chip">⌚ Đồng hồ</div></div>
+                <div class="col"><div class="cat-chip">🕶️ Kính mắt</div></div>
+                <div class="col"><div class="cat-chip">🎒 Balo</div></div>
+                <div class="col"><div class="cat-chip">🧢 Mũ nón</div></div>
+                <div class="col"><div class="cat-chip">💍 Trang sức</div></div>
+                <div class="col"><div class="cat-chip">📱 Phụ kiện</div></div>
+                <div class="col"><div class="cat-chip">🌟 Hot Deal</div></div>
+            </div>
+        </div>
+
+        <!-- PRODUCTS SECTION -->
+        <main>
+            <section id="products-section" class="section">
+                <div class="container">
+                    <header class="section-header">
+                        <div class="section-tag">🛒 Sản phẩm</div>
+                        <h2>Khám phá bộ sưu tập</h2>
+                        <p>Những sản phẩm được yêu thích nhất, chọn lọc kỹ lưỡng cho bạn</p>
+                    </header>
+
+                    <!-- Bootstrap 10 cột sản phẩm -->
+                    <div class="row row-cols-10 g-3" id="product-grid" role="list" aria-label="Danh sách sản phẩm">
+                        <!-- Products injected by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+        <!-- FOOTER -->
+        <footer class="footer" role="contentinfo">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <div class="logo-text">🛍️ HNTS</div>
+                        <p>Nền tảng mua sắm trực tuyến hàng đầu Việt Nam. Mang đến trải nghiệm mua sắm dễ dàng, tiện lợi và tiết kiệm cho mọi gia đình.</p>
+                        <div class="footer-socials">
+                            <a href="#" class="social-btn" aria-label="Facebook">📘</a>
+                            <a href="#" class="social-btn" aria-label="Instagram">📸</a>
+                            <a href="#" class="social-btn" aria-label="TikTok">🎵</a>
+                            <a href="#" class="social-btn" aria-label="YouTube">▶️</a>
+                        </div>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Liên kết nhanh</h4>
+                        <ul>
+                            <li><a href="#">Trang chủ</a></li>
+                            <li><a href="#">Sản phẩm mới</a></li>
+                            <li><a href="#">Khuyến mãi</a></li>
+                            <li><a href="#">Về chúng tôi</a></li>
+                            <li><a href="#">Blog thời trang</a></li>
+                            <li><a href="#">Chính sách đổi trả</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col footer-contact">
+                        <h4>Liên hệ</h4>
+                        <p><span class="icon">📍</span>123 Đường Lê Lợi, Q.1, TP.HCM</p>
+                        <p><span class="icon">📞</span>1800 1234 (Miễn phí)</p>
+                        <p><span class="icon">✉️</span>support@hnts.vn</p>
+                        <p><span class="icon">🕐</span>Thứ 2 – Chủ nhật: 8:00 – 22:00</p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>© 2026 HNTS. Tất cả quyền được bảo lưu.</p>
+                    <p>Được tạo với <span class="heart">❤️</span> tại Việt Nam</p>
+                </div>
+            </div>
+        </footer>
+    </div><!-- end user-scroll-wrap -->
+
+</section><!-- end user-page -->
