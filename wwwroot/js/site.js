@@ -1,8 +1,405 @@
+//site.js
+
 /**
  * ShopEasy – site.js (Single-Page / SPA version)
  * Tất cả logic: auth, products, cart, admin CRUD
  * Không dùng window.location.href – chỉ dùng showPage()
  */
+
+
+// ============================================================
+// AUTH FUNCTIONS
+// ============================================================
+
+// Kiểm tra trạng thái đăng nhập khi load trang
+function checkAuthStatus() {
+    fetch('/Account/CheckAuth')
+        .then(r => r.json())
+        .then(data => {
+            const loginWrap = document.getElementById('nav-login-wrap');
+            const logoutWrap = document.getElementById('nav-logout-wrap');
+
+            if (data.isLoggedIn) {
+                if (loginWrap) loginWrap.style.display = 'none';
+                if (logoutWrap) {
+                    logoutWrap.style.display = 'block';
+                    const usernameStat = document.getElementById('nav-username');
+                    if (usernameStat) {
+                        usernameStat.textContent = '👤 ' + data.fullName;
+                    }
+                }
+                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('fullName', data.fullName);
+                localStorage.setItem('role', data.role);
+            } else {
+                if (loginWrap) loginWrap.style.display = 'block';
+                if (logoutWrap) logoutWrap.style.display = 'none';
+                localStorage.removeItem('userId');
+                localStorage.removeItem('username');
+                localStorage.removeItem('fullName');
+                localStorage.removeItem('role');
+            }
+        })
+        .catch(err => console.error('Lỗi kiểm tra đăng nhập:', err));
+}
+
+// Chuyển tab login/register
+function switchLoginTab(tabName) {
+    console.log('Switching to tab:', tabName);
+
+    // Ẩn tất cả tab content
+    const allTabs = document.querySelectorAll('.login-tab-content');
+    allTabs.forEach(tab => {
+        tab.style.display = 'none';
+        console.log('Hiding tab:', tab.id);
+    });
+
+    // Xóa active style từ tất cả button
+    const allBtns = document.querySelectorAll('.login-tab-btn');
+    allBtns.forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.borderBottomColor = 'transparent';
+        btn.style.color = '#999';
+    });
+
+    // Hiển thị tab được chọn
+    const selectedTab = document.getElementById(tabName);
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
+        console.log('Tab displayed:', tabName);
+    } else {
+        console.warn('Tab not found:', tabName);
+    }
+
+    // Thêm active style cho button
+    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.borderBottomColor = '#ff6b9d';
+        activeBtn.style.color = '#ff6b9d';
+        console.log('Button activated:', tabName);
+    } else {
+        console.warn('Button not found:', tabName);
+    }
+}
+
+// Xử lý Login (modal)
+function setupLoginForm() {
+    const loginForm = document.getElementById('login-form');
+    if (!loginForm) {
+        console.warn('Login form not found');
+        return;
+    }
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('login-error');
+
+        if (!username || !password) {
+            errorDiv.textContent = 'Vui lòng nhập tên đăng nhập và mật khẩu.';
+            errorDiv.style.color = '#c33';
+            return;
+        }
+
+        fetch('/Account/Login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    errorDiv.textContent = '';
+                    closeLoginModal();
+                    setTimeout(() => {
+                        checkAuthStatus();
+                        location.reload();
+                    }, 300);
+                } else {
+                    errorDiv.textContent = data.message || 'Đăng nhập thất bại.';
+                    errorDiv.style.color = '#c33';
+                }
+            })
+            .catch(err => {
+                errorDiv.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
+                console.error('Login error:', err);
+            });
+    });
+}
+
+// Xử lý Register (modal)
+function setupRegisterForm() {
+    const registerForm = document.getElementById('quick-register-form');
+    if (!registerForm) {
+        console.warn('Register form not found');
+        return;
+    }
+
+    registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('reg-username').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const fullName = document.getElementById('reg-fullname').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const confirmPassword = document.getElementById('reg-confirm-password').value;
+        const errorDiv = document.getElementById('register-error');
+
+        // Validation
+        if (!username || username.length < 3) {
+            errorDiv.textContent = 'Tên đăng nhập phải từ 3 ký tự trở lên.';
+            errorDiv.style.color = '#c33';
+            return;
+        }
+
+        if (!email || !email.includes('@')) {
+            errorDiv.textContent = 'Email không hợp lệ.';
+            errorDiv.style.color = '#c33';
+            return;
+        }
+
+        if (!fullName) {
+            errorDiv.textContent = 'Họ và tên không được để trống.';
+            errorDiv.style.color = '#c33';
+            return;
+        }
+
+        if (!password || password.length < 6) {
+            errorDiv.textContent = 'Mật khẩu phải từ 6 ký tự trở lên.';
+            errorDiv.style.color = '#c33';
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            errorDiv.textContent = 'Mật khẩu không khớp.';
+            errorDiv.style.color = '#c33';
+            return;
+        }
+
+        fetch('/Account/Register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&fullName=${encodeURIComponent(fullName)}&password=${encodeURIComponent(password)}&confirmPassword=${encodeURIComponent(confirmPassword)}`
+        })
+            .then(r => r.text())
+            .then(html => {
+                if (html.includes('Success') || html.includes('thành công')) {
+                    errorDiv.textContent = '✓ Đăng ký thành công! Vui lòng đăng nhập.';
+                    errorDiv.style.color = '#0a0';
+                    setTimeout(() => {
+                        registerForm.reset();
+                        switchLoginTab('login-form-tab');
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = 'Đăng ký thất bại. Tên đăng nhập hoặc email có thể đã tồn tại.';
+                    errorDiv.style.color = '#c33';
+                }
+            })
+            .catch(err => {
+                errorDiv.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
+                console.error('Register error:', err);
+            });
+    });
+}
+
+// Xử lý Logout
+function setupLogoutBtn() {
+    const logoutBtn = document.getElementById('user-logout-btn');
+    if (!logoutBtn) return;
+
+    logoutBtn.addEventListener('click', () => {
+        fetch('/Account/Logout', { method: 'POST' })
+            .then(() => {
+                localStorage.clear();
+                location.reload();
+            })
+            .catch(err => console.error('Logout error:', err));
+    });
+}
+
+// Modal Login
+function openLoginModal() {
+    const modal = document.getElementById('login-modal-overlay');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeLoginModal() {
+    const modal = document.getElementById('login-modal-overlay');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        // Clear form
+        const form = document.getElementById('login-form');
+        if (form) form.reset();
+        const form2 = document.getElementById('quick-register-form');
+        if (form2) form2.reset();
+    }
+}
+
+// ============================================================
+// INIT - Chạy khi DOM load xong
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing auth...');
+
+    checkAuthStatus();
+    setupLoginForm();
+    setupRegisterForm();
+    setupLogoutBtn();
+
+    // Setup tab buttons - KỲ LẠ QUAN TRỌNG
+    const tabBtns = document.querySelectorAll('.login-tab-btn');
+    console.log('Found tab buttons:', tabBtns.length);
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Tab button clicked:', btn.dataset.tab);
+            switchLoginTab(btn.dataset.tab);
+        });
+    });
+
+    // Nút đăng nhập - mở modal
+    const navLoginBtn = document.getElementById('nav-login-btn');
+    if (navLoginBtn) {
+        navLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openLoginModal();
+        });
+    }
+
+    // Nút đóng modal
+    const modalClose = document.getElementById('login-modal-close');
+    if (modalClose) {
+        modalClose.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeLoginModal();
+        });
+    }
+
+    // Đóng modal khi click overlay
+    const modalOverlay = document.getElementById('login-modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeLoginModal();
+            }
+        });
+    }
+
+    console.log('Auth initialization complete');
+});
+// ============================================================
+// INIT - Chạy khi DOM load xong
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing auth...');
+
+    checkAuthStatus();
+    setupLoginForm();
+    setupRegisterForm();
+    setupLogoutBtn();
+
+    // Setup tab buttons - QUAN TRỌNG
+    const tabBtns = document.querySelectorAll('.login-tab-btn');
+    console.log('Found tab buttons:', tabBtns.length);
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tabName = btn.getAttribute('data-tab');
+            console.log('Tab button clicked:', tabName);
+            switchLoginTab(tabName);
+        });
+    });
+
+    // Nút đăng nhập - mở modal
+    const navLoginBtn = document.getElementById('nav-login-btn');
+    if (navLoginBtn) {
+        navLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openLoginModal();
+        });
+    }
+
+    // Nút đóng modal
+    const modalClose = document.getElementById('login-modal-close');
+    if (modalClose) {
+        modalClose.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeLoginModal();
+        });
+    }
+
+    // Đóng modal khi click overlay
+    const modalOverlay = document.getElementById('login-modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeLoginModal();
+            }
+        });
+    }
+
+    // Đăng xuất
+    document.getElementById('user-logout-btn')?.addEventListener('click', handleLogout);
+    document.getElementById('admin-logout-btn')?.addEventListener('click', handleLogout);
+    document.getElementById('sidebar-logout')?.addEventListener('click', handleLogout);
+
+    // Hero CTA scroll
+    document.getElementById('hero-cta')?.addEventListener('click', () => {
+        document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Nav products link
+    document.getElementById('nav-products')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Cart drawer events
+    const cartBtn = document.querySelector('.nav-cart-btn');
+    if (cartBtn) {
+        cartBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openCartDrawer();
+        });
+    }
+
+    document.getElementById('cart-drawer-close')?.addEventListener('click', closeCartDrawer);
+    document.getElementById('cart-drawer-overlay')?.addEventListener('click', closeCartDrawer);
+    document.getElementById('btn-checkout')?.addEventListener('click', checkoutCart);
+
+    // Login modal – form submit
+    document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+
+    // Khởi tạo trang
+    const isAdminPage = document.getElementById('admin-page') !== null;
+    const isUserPage = document.getElementById('user-page') !== null;
+
+    if (isAdminPage) {
+        showPage('admin');
+        return;
+    }
+
+    if (isUserPage) {
+        showPage('user');
+        return;
+    }
+
+    console.log('Auth initialization complete');
+});
 
 // ===========================
 // CONSTANTS & CONFIG
@@ -16,58 +413,74 @@ const STORAGE_KEYS = {
 
 const ACCOUNTS = {
     admin: { username: 'admin', password: '123456', role: 'admin' },
-    user:  { username: 'user',  password: '123456', role: 'user'  },
+    user: { username: 'user', password: '123456', role: 'user' },
 };
 
 // Sản phẩm mẫu mặc định – có thêm images[], inStock, stockQty, thumbnail
 const DEFAULT_PRODUCTS = [
-    { id: 1, name: 'Áo Thun Premium Cotton', price: 299000,
-      description: 'Áo thun chất liệu cotton cao cấp, thoáng mát, phù hợp mọi dịp.',
-      image: 'https://picsum.photos/seed/shirt1/400/300',
-      images: ['https://picsum.photos/seed/shirt1/400/300','https://picsum.photos/seed/shirt2/400/300','https://picsum.photos/seed/shirt3/400/300'],
-      thumbnail: 0, badge: 'Hot', rating: 5, inStock: true, stockQty: 50 },
+    {
+        id: 1, name: 'Áo Thun Premium Cotton', price: 299000,
+        description: 'Áo thun chất liệu cotton cao cấp, thoáng mát, phù hợp mọi dịp.',
+        image: 'https://picsum.photos/seed/shirt1/400/300',
+        images: ['https://picsum.photos/seed/shirt1/400/300', 'https://picsum.photos/seed/shirt2/400/300', 'https://picsum.photos/seed/shirt3/400/300'],
+        thumbnail: 0, badge: 'Hot', rating: 5, inStock: true, stockQty: 50
+    },
 
-    { id: 2, name: 'Giày Sneaker Classic', price: 890000,
-      description: 'Giày sneaker thiết kế cổ điển, êm ái, bền đẹp theo thời gian.',
-      image: 'https://picsum.photos/seed/shoe1/400/300',
-      images: ['https://picsum.photos/seed/shoe1/400/300','https://picsum.photos/seed/shoe2/400/300'],
-      thumbnail: 0, badge: 'New', rating: 4, inStock: true, stockQty: 20 },
+    {
+        id: 2, name: 'Giày Sneaker Classic', price: 890000,
+        description: 'Giày sneaker thiết kế cổ điển, êm ái, bền đẹp theo thời gian.',
+        image: 'https://picsum.photos/seed/shoe1/400/300',
+        images: ['https://picsum.photos/seed/shoe1/400/300', 'https://picsum.photos/seed/shoe2/400/300'],
+        thumbnail: 0, badge: 'New', rating: 4, inStock: true, stockQty: 20
+    },
 
-    { id: 3, name: 'Túi Tote Canvas', price: 199000,
-      description: 'Túi tote vải canvas chắc chắn, phong cách tối giản, đa năng.',
-      image: 'https://picsum.photos/seed/bag1/400/300',
-      images: ['https://picsum.photos/seed/bag1/400/300'],
-      thumbnail: 0, badge: 'Sale', rating: 4, inStock: false, stockQty: 0 },
+    {
+        id: 3, name: 'Túi Tote Canvas', price: 199000,
+        description: 'Túi tote vải canvas chắc chắn, phong cách tối giản, đa năng.',
+        image: 'https://picsum.photos/seed/bag1/400/300',
+        images: ['https://picsum.photos/seed/bag1/400/300'],
+        thumbnail: 0, badge: 'Sale', rating: 4, inStock: false, stockQty: 0
+    },
 
-    { id: 4, name: 'Đồng Hồ Minimalist', price: 1250000,
-      description: 'Đồng hồ thiết kế tối giản, mặt kính sapphire chống xước.',
-      image: 'https://picsum.photos/seed/watch1/400/300',
-      images: ['https://picsum.photos/seed/watch1/400/300','https://picsum.photos/seed/watch2/400/300','https://picsum.photos/seed/watch3/400/300'],
-      thumbnail: 0, badge: 'Hot', rating: 5, inStock: true, stockQty: 8 },
+    {
+        id: 4, name: 'Đồng Hồ Minimalist', price: 1250000,
+        description: 'Đồng hồ thiết kế tối giản, mặt kính sapphire chống xước.',
+        image: 'https://picsum.photos/seed/watch1/400/300',
+        images: ['https://picsum.photos/seed/watch1/400/300', 'https://picsum.photos/seed/watch2/400/300', 'https://picsum.photos/seed/watch3/400/300'],
+        thumbnail: 0, badge: 'Hot', rating: 5, inStock: true, stockQty: 8
+    },
 
-    { id: 5, name: 'Kính Mát UV400', price: 450000,
-      description: 'Kính mát chống tia UV400, gọng nhẹ, phù hợp mọi khuôn mặt.',
-      image: 'https://picsum.photos/seed/glass1/400/300',
-      images: ['https://picsum.photos/seed/glass1/400/300'],
-      thumbnail: 0, badge: 'New', rating: 4, inStock: true, stockQty: 30 },
+    {
+        id: 5, name: 'Kính Mát UV400', price: 450000,
+        description: 'Kính mát chống tia UV400, gọng nhẹ, phù hợp mọi khuôn mặt.',
+        image: 'https://picsum.photos/seed/glass1/400/300',
+        images: ['https://picsum.photos/seed/glass1/400/300'],
+        thumbnail: 0, badge: 'New', rating: 4, inStock: true, stockQty: 30
+    },
 
-    { id: 6, name: 'Balo Laptop 15"', price: 650000,
-      description: 'Balo chống thấm nước, ngăn đựng laptop có đệm bảo vệ.',
-      image: 'https://picsum.photos/seed/backpack1/400/300',
-      images: ['https://picsum.photos/seed/backpack1/400/300','https://picsum.photos/seed/backpack2/400/300'],
-      thumbnail: 0, badge: 'Sale', rating: 5, inStock: false, stockQty: 0 },
+    {
+        id: 6, name: 'Balo Laptop 15"', price: 650000,
+        description: 'Balo chống thấm nước, ngăn đựng laptop có đệm bảo vệ.',
+        image: 'https://picsum.photos/seed/backpack1/400/300',
+        images: ['https://picsum.photos/seed/backpack1/400/300', 'https://picsum.photos/seed/backpack2/400/300'],
+        thumbnail: 0, badge: 'Sale', rating: 5, inStock: false, stockQty: 0
+    },
 
-    { id: 7, name: 'Nón Bucket Trendy', price: 175000,
-      description: 'Nón bucket phong cách streetwear, chất liệu vải dù nhẹ.',
-      image: 'https://picsum.photos/seed/hat1/400/300',
-      images: ['https://picsum.photos/seed/hat1/400/300'],
-      thumbnail: 0, badge: 'New', rating: 3, inStock: true, stockQty: 100 },
+    {
+        id: 7, name: 'Nón Bucket Trendy', price: 175000,
+        description: 'Nón bucket phong cách streetwear, chất liệu vải dù nhẹ.',
+        image: 'https://picsum.photos/seed/hat1/400/300',
+        images: ['https://picsum.photos/seed/hat1/400/300'],
+        thumbnail: 0, badge: 'New', rating: 3, inStock: true, stockQty: 100
+    },
 
-    { id: 8, name: 'Áo Khoác Denim', price: 780000,
-      description: 'Áo khoác denim dày dặn, wash màu vintage, bền đẹp theo năm tháng.',
-      image: 'https://picsum.photos/seed/jacket1/400/300',
-      images: ['https://picsum.photos/seed/jacket1/400/300','https://picsum.photos/seed/jacket2/400/300'],
-      thumbnail: 0, badge: 'Hot', rating: 5, inStock: true, stockQty: 15 },
+    {
+        id: 8, name: 'Áo Khoác Denim', price: 780000,
+        description: 'Áo khoác denim dày dặn, wash màu vintage, bền đẹp theo năm tháng.',
+        image: 'https://picsum.photos/seed/jacket1/400/300',
+        images: ['https://picsum.photos/seed/jacket1/400/300', 'https://picsum.photos/seed/jacket2/400/300'],
+        thumbnail: 0, badge: 'Hot', rating: 5, inStock: true, stockQty: 15
+    },
 ];
 
 // ===========================
@@ -90,44 +503,93 @@ function showPage(page) {
 
     if (userPageEl) {
         userPageEl.classList.remove('d-none');
-        renderUserProducts(getProducts());
-        updateCartCount();
-        initNavbarScroll();
-        initHamburger();
-        updateNavbarAuthState();
+
+        initProducts().then(() => {
+            renderUserProducts(getProducts());
+            updateCartCount();
+            initNavbarScroll();
+            initHamburger();
+            updateNavbarAuthState();
+        });
     }
 
     if (adminPageEl) {
         adminPageEl.classList.remove('d-none');
-        renderAdminProducts();
-        updateStats();
+
+        // Trang admin bây giờ render bằng C# MVC trong Views/Admin/Index.cshtml
+        // Không gọi renderAdminProducts()
+        // Không gọi updateStats()
+        // Không gọi API JavaScript
     }
 }
 
 // ===========================
-// PRODUCT MANAGEMENT
+// PRODUCT MANAGEMENT - SQL SERVER
 // ===========================
 
-/** Khởi tạo sản phẩm mẫu nếu localStorage chưa có */
-function initProducts() {
-    if (!localStorage.getItem(STORAGE_KEYS.products)) {
-        saveProducts(DEFAULT_PRODUCTS);
-    }
+const PRODUCT_API_URL = '/api/admin-products';
+
+let productsCache = [];
+
+async function initProducts() {
+    await loadProductsFromSql();
 }
 
-/** Lấy danh sách sản phẩm từ localStorage */
-function getProducts() {
+async function loadProductsFromSql() {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEYS.products)) || [];
-    } catch { return []; }
+        const response = await fetch(PRODUCT_API_URL);
+
+        if (!response.ok) {
+            throw new Error('Không thể tải sản phẩm từ SQL Server.');
+        }
+
+        const products = await response.json();
+
+        productsCache = products.map(normalizeProduct);
+
+        return productsCache;
+    } catch (error) {
+        console.error(error);
+        showToast?.('❌ Không thể tải sản phẩm từ SQL Server.', 'error');
+        productsCache = [];
+        return [];
+    }
 }
 
-/** Lưu danh sách sản phẩm vào localStorage */
+function normalizeProduct(product) {
+    const images = product.images && product.images.length > 0
+        ? product.images
+        : product.image
+            ? [product.image]
+            : [];
+
+    const status = product.status || (product.inStock === false ? 'OutOfStock' : 'InStock');
+
+    return {
+        id: product.id,
+        name: product.name,
+        price: Number(product.price) || 0,
+        description: product.description || '',
+        image: product.image || product.imageUrl || images[0] || '',
+        images: images,
+        thumbnail: product.thumbnail ?? 0,
+        badge: product.badge || '',
+        status: status,
+        inStock: status === 'InStock',
+        stockQty: Number(product.stockQty) || 0,
+        rating: Number(product.rating) || 5,
+        categoryId: product.categoryId || 0
+    };
+}
+
+function getProducts() {
+    return productsCache;
+}
+
 function saveProducts(products) {
-    localStorage.setItem(STORAGE_KEYS.products, JSON.stringify(products));
+    productsCache = products;
 }
 
-/** Tạo ID mới */
 function generateId() {
     const products = getProducts();
     return products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
@@ -230,6 +692,17 @@ function showLoginError(msg, el) {
     setTimeout(() => el.classList.remove('show'), 3500);
 }
 
+// Setup tab buttons
+const tabBtns = document.querySelectorAll('.login-tab-btn');
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tabName = btn.getAttribute('data-tab');
+        console.log('Tab clicked:', tabName);
+        switchLoginTab(tabName);
+    });
+});
+
 /**
  * handleLogout()
  * Xóa session, quay về user page (không redirect đến login)
@@ -258,17 +731,17 @@ function getCurrentUser() {
  */
 function updateNavbarAuthState() {
     const user = getCurrentUser();
-    const loginWrap   = document.getElementById('nav-login-wrap');
-    const logoutWrap  = document.getElementById('nav-logout-wrap');
-    const usernameEl  = document.getElementById('nav-username');
+    const loginWrap = document.getElementById('nav-login-wrap');
+    const logoutWrap = document.getElementById('nav-logout-wrap');
+    const usernameEl = document.getElementById('nav-username');
 
     if (user) {
-        if (loginWrap)  loginWrap.style.display  = 'none';
-        if (logoutWrap) logoutWrap.style.display  = '';
-        if (usernameEl) usernameEl.textContent    = `👤 ${user.username}`;
+        if (loginWrap) loginWrap.style.display = 'none';
+        if (logoutWrap) logoutWrap.style.display = '';
+        if (usernameEl) usernameEl.textContent = `👤 ${user.username}`;
     } else {
-        if (loginWrap)  loginWrap.style.display  = '';
-        if (logoutWrap) logoutWrap.style.display  = 'none';
+        if (loginWrap) loginWrap.style.display = '';
+        if (logoutWrap) logoutWrap.style.display = 'none';
     }
 }
 
@@ -293,9 +766,9 @@ function addToCart(productId) {
     const product = getProducts().find(p => p.id === productId);
     if (!product || product.inStock === false) return;
 
-    const cart     = getCart();
+    const cart = getCart();
     const existing = cart.find(c => c.id === productId);
-    
+
     // Kiểm tra số lượng tồn kho
     const currentQty = existing ? existing.qty : 0;
     const maxQty = product.stockQty ?? 999;
@@ -444,7 +917,7 @@ function checkoutCart() {
     }
 
     const products = getProducts();
-    
+
     // Kiểm tra lại tồn kho một lần nữa trước khi thanh toán
     for (const item of cart) {
         const prod = products.find(p => p.id === item.id);
@@ -472,7 +945,7 @@ function checkoutCart() {
     saveCart([]); // Làm trống giỏ
     updateCartCount();
     closeCartDrawer();
-    
+
     // Render lại giao diện
     const user = getCurrentUser();
 
@@ -763,15 +1236,15 @@ function renderUserProducts(products) {
      
         <div class="product-review-summary">
             ${(() => {
-                        const avg = getAverageRating(product.id);
-                        const count = getProductReviews(product.id).length;
+                const avg = getAverageRating(product.id);
+                const count = getProductReviews(product.id).length;
 
-                        if (!avg) {
-                            return `<span>Chưa có đánh giá</span>`;
-                        }
+                if (!avg) {
+                    return `<span>Chưa có đánh giá</span>`;
+                }
 
-                        return `<span>⭐ ${avg.toFixed(1)}/5 (${count} đánh giá)</span>`;
-             })()}
+                return `<span>⭐ ${avg.toFixed(1)}/5 (${count} đánh giá)</span>`;
+            })()}
         </div>
 
         <button class="btn-review" type="button" onclick="openReviewModal(${product.id})">
@@ -864,8 +1337,8 @@ function renderAdminProducts(filter) {
       </tr>`;
     } else {
         tbody.innerHTML = products.map(product => {
-            const thumbnail    = getProductThumbnail(product);
-            const imgCount     = (product.images || [product.image]).filter(Boolean).length;
+            const thumbnail = getProductThumbnail(product);
+            const imgCount = (product.images || [product.image]).filter(Boolean).length;
             const status = product.status || (product.inStock === false ? 'OutOfStock' : 'InStock');
             const isComingSoon = status === 'ComingSoon';
             const isOutOfStock = status === 'OutOfStock';
@@ -891,7 +1364,7 @@ function renderAdminProducts(filter) {
            ${product.stockQty !== undefined
                             ? `<small class="stock-qty">(${product.stockQty} cái)</small>`
                             : ''}`
-         }
+                }
         </td>
         <td>
           <button class="btn-edit" onclick="editProduct(${product.id})">✏️ Sửa</button>
@@ -909,13 +1382,13 @@ function renderAdminProducts(filter) {
 
 /** Cập nhật 4 ô thống kê */
 function updateStats() {
-    const products   = getProducts();
-    const totalEl    = document.getElementById('stat-total');
+    const products = getProducts();
+    const totalEl = document.getElementById('stat-total');
     const maxPriceEl = document.getElementById('stat-max-price');
     const totalValEl = document.getElementById('stat-total-value');
     const outStockEl = document.getElementById('stat-out-of-stock');
 
-    if (totalEl)    totalEl.textContent    = products.length;
+    if (totalEl) totalEl.textContent = products.length;
     if (maxPriceEl) maxPriceEl.textContent = products.length
         ? formatCurrency(Math.max(...products.map(p => p.price))) : '—';
     if (totalValEl) totalValEl.textContent = products.length
@@ -927,21 +1400,41 @@ function updateStats() {
 // ADMIN – CRUD
 // ===========================
 
-let editingId   = null;
+let editingId = null;
 let adminImages = []; // Mảng ảnh hiện tại của sản phẩm đang thêm/sửa
 
 /** Thêm sản phẩm mới */
-function addProduct() {
+async function addProduct() {
     const data = getFormData();
     if (!data) return;
 
-    const products = getProducts();
-    products.push({ ...data, id: generateId(), rating: 5 });
-    saveProducts(products);
+    try {
+        const response = await fetch(PRODUCT_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ...data,
+                rating: 5,
+                categoryId: data.categoryId || 0
+            })
+        });
 
-    resetForm();
-    renderAdminProducts(getSearchValue());
-    showToast('✅ Thêm sản phẩm thành công!', 'success');
+        if (!response.ok) {
+            throw new Error('Không thể thêm sản phẩm vào SQL Server.');
+        }
+
+        await loadProductsFromSql();
+
+        resetForm();
+        renderAdminProducts(getSearchValue());
+        renderUserProducts(getProducts());
+        showToast('✅ Đã thêm sản phẩm vào SQL Server!', 'success');
+    } catch (error) {
+        console.error(error);
+        showToast('❌ Lỗi khi thêm sản phẩm vào SQL Server.', 'error');
+    }
 }
 
 /**
@@ -953,9 +1446,9 @@ function editProduct(id) {
     if (!product) return;
 
     editingId = id;
-    document.getElementById('prod-name').value  = product.name;
+    document.getElementById('prod-name').value = product.name;
     document.getElementById('prod-price').value = product.price;
-    document.getElementById('prod-desc').value  = product.description;
+    document.getElementById('prod-desc').value = product.description;
     document.getElementById('prod-badge').value = product.badge || '';
 
     // Stock fields
@@ -991,21 +1484,42 @@ function editProduct(id) {
 }
 
 /** Cập nhật sản phẩm đang sửa */
-function updateProduct() {
+async function updateProduct() {
     if (!editingId) return;
+
     const data = getFormData();
     if (!data) return;
 
-    const products = getProducts();
-    const idx      = products.findIndex(p => p.id === editingId);
-    if (idx === -1) return;
+    try {
+        const oldProduct = getProducts().find(p => p.id === editingId);
 
-    products[idx] = { ...products[idx], ...data };
-    saveProducts(products);
+        const response = await fetch(`${PRODUCT_API_URL}/${editingId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ...oldProduct,
+                ...data,
+                id: editingId,
+                categoryId: oldProduct?.categoryId || data.categoryId || 0
+            })
+        });
 
-    resetForm();
-    renderAdminProducts(getSearchValue());
-    showToast('✅ Cập nhật sản phẩm thành công!', 'success');
+        if (!response.ok) {
+            throw new Error('Không thể cập nhật sản phẩm trong SQL Server.');
+        }
+
+        await loadProductsFromSql();
+
+        resetForm();
+        renderAdminProducts(getSearchValue());
+        renderUserProducts(getProducts());
+        showToast('✅ Đã cập nhật sản phẩm trong SQL Server!', 'success');
+    } catch (error) {
+        console.error(error);
+        showToast('❌ Lỗi khi cập nhật sản phẩm trong SQL Server.', 'error');
+    }
 }
 
 /** Xóa sản phẩm sau khi xác nhận */
@@ -1080,7 +1594,7 @@ function getFormData() {
  * Reset về trạng thái Thêm mới
  */
 function resetForm() {
-    editingId   = null;
+    editingId = null;
     adminImages = [];
 
     ['prod-name', 'prod-price', 'prod-desc', 'prod-img-file'].forEach(id => {
@@ -1177,7 +1691,7 @@ function showToast(message, type = 'success') {
         document.body.appendChild(toast);
     }
     toast.textContent = message;
-    toast.className   = `toast-custom ${type}`;
+    toast.className = `toast-custom ${type}`;
     toast.classList.add('show');
     clearTimeout(toast._timer);
     toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
@@ -1203,7 +1717,7 @@ function initNavbarScroll() {
 // ===========================
 
 function initHamburger() {
-    const btn   = document.getElementById('hamburger');
+    const btn = document.getElementById('hamburger');
     const links = document.getElementById('nav-links');
     if (!btn || !links) return;
     const newBtn = btn.cloneNode(true);
@@ -1230,10 +1744,7 @@ function scrollUserTop() {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 1. Khởi tạo sản phẩm mẫu
-    initProducts();
-
-    // 2. Login modal – form submit
+    // Login modal – form submit
     document.getElementById('login-form')?.addEventListener('submit', handleLogin);
 
     // Đóng modal khi click backdrop
@@ -1241,78 +1752,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === e.currentTarget) hideLoginModal();
     });
 
-    // Nút × đóng modal
+    // Nút X đóng modal
     document.getElementById('login-modal-close')?.addEventListener('click', hideLoginModal);
 
     // Nút Đăng nhập trên navbar user
     document.getElementById('nav-login-btn')?.addEventListener('click', showLoginModal);
 
-    // 3. Đăng xuất (User + Admin)
+    // Đăng xuất
     document.getElementById('user-logout-btn')?.addEventListener('click', handleLogout);
     document.getElementById('admin-logout-btn')?.addEventListener('click', handleLogout);
     document.getElementById('sidebar-logout')?.addEventListener('click', handleLogout);
 
-    // 4. Admin CRUD
-    document.getElementById('btn-add')?.addEventListener('click', addProduct);
-    document.getElementById('btn-update')?.addEventListener('click', updateProduct);
-    document.getElementById('btn-cancel')?.addEventListener('click', cancelEdit);
-
-    // 5. Search admin
-    document.getElementById('search-products')?.addEventListener('input', (e) => {
-        renderAdminProducts(e.target.value.trim());
-    });
-
-    // 6. Hero CTA scroll
+    // Hero CTA scroll
     document.getElementById('hero-cta')?.addEventListener('click', () => {
         document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // 7. Nav products link
+    // Nav products link
     document.getElementById('nav-products')?.addEventListener('click', (e) => {
         e.preventDefault();
         document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // 8. Stock checkbox toggle
-    document.getElementById('prod-status')?.addEventListener('change', toggleStockQty);
-
-    // 9. IMAGE UPLOAD (nhiều ảnh, tối đa 5)
-    const imageFileInput = document.getElementById('prod-img-file');
-    if (imageFileInput) {
-        imageFileInput.addEventListener('change', function () {
-            const files     = Array.from(this.files);
-            if (!files.length) return;
-
-            const MAX_IMGS  = 5;
-            const remaining = MAX_IMGS - adminImages.length;
-            const toRead    = files.slice(0, remaining);
-
-            if (toRead.length < files.length) {
-                showToast(`⚠️ Chỉ có thể thêm tối đa ${MAX_IMGS} ảnh.`, 'error');
-            }
-
-            let loaded = 0;
-            toRead.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    adminImages.push(e.target.result);
-                    loaded++;
-                    if (loaded === toRead.length) {
-                        const thumbEl  = document.querySelector('.admin-img-item.is-thumbnail');
-                        const thumbIdx = parseInt(thumbEl?.dataset?.index ?? '0') || 0;
-                        renderAdminImagePreview(Math.min(thumbIdx, adminImages.length - 1));
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
-
-            // Reset input để có thể chọn lại cùng file
-            this.value = '';
-        });
-    }
-
-    // 9.5. CART DRAWER EVENTS
+    // Cart drawer events
     const cartBtn = document.querySelector('.nav-cart-btn');
+
     if (cartBtn) {
         cartBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1324,11 +1788,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cart-drawer-overlay')?.addEventListener('click', closeCartDrawer);
     document.getElementById('btn-checkout')?.addEventListener('click', checkoutCart);
 
-    // 10. Khởi tạo trang – admin đã đăng nhập vào admin, còn lại vào user page
-    const user = getCurrentUser();
-    if (user && user.role === 'admin') {
+    // Khởi tạo trang
+    const isAdminPage = document.getElementById('admin-page') !== null;
+    const isUserPage = document.getElementById('user-page') !== null;
+
+    if (isAdminPage) {
         showPage('admin');
-    } else {
-        showPage('user'); // guest hoặc user đã đăng nhập đều vào user page
+        return;
     }
+
+    if (isUserPage) {
+        showPage('user');
+        return;
+    }
+
 });

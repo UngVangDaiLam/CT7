@@ -1,0 +1,69 @@
+﻿@model List<Order>
+
+@{
+    ViewData["Title"] = "Lịch Sử Đơn Hàng";
+}
+
+<div class="container" style="padding: 40px 0;">
+    <h1>📦 Lịch Sử Đơn Hàng</h1>
+
+    @if (Model.Count == 0)
+    {
+        <div style="text-align: center; padding: 60px 20px; background: #f8fafc; border-radius: 12px; margin: 40px 0;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📋</div>
+            <h3>Chưa có đơn hàng nào</h3>
+            <p style="color: #64748b; margin: 20px 0;">Bạn chưa đặt hàng nào. Hãy bắt đầu mua sắm!</p>
+            <a href="/" class="btn btn-primary" style="padding: 12px 28px; background: #f43f5e; color: #fff; border-radius: 8px; text-decoration: none; display: inline-block;">Mua sắm ngay</a>
+        </div>
+    }
+    else
+    {
+        <table style="width: 100%; margin: 40px 0; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #e2e8f0;">
+                    <th style="text-align: left; padding: 15px; font-weight: 600;">Mã Đơn</th>
+                    <th style="text-align: left; padding: 15px; font-weight: 600;">Ngày Đặt</th>
+                    <th style="text-align: right; padding: 15px; font-weight: 600;">Tổng Tiền</th>
+                    <th style="text-align: center; padding: 15px; font-weight: 600;">Trạng Thái</th>
+                    <th style="text-align: center; padding: 15px; font-weight: 600;">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 15px; font-weight: 600;">#@order.Id</td>
+                        <td style="padding: 15px;">@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td style="text-align: right; padding: 15px; font-weight: 600; color: #f43f5e;">@order.TotalAmount.ToString("N0")đ</td>
+                        <td style="text-align: center; padding: 15px;">
+                            <span style="background: #f59e0b; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-block;">@order.Status</span>
+                        </td>
+                        <td style="text-align: center; padding: 15px;">
+                            <a href="/Order/Details/@order.Id" style="color: #3b82f6; text-decoration: none; font-weight: 600;">Chi tiết</a>
+                            @if (order.Status == "Pending")
+                            {
+                                <button onclick="cancelOrder(@order.Id)" style="background: #fff0f3; color: #f43f5e; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Hủy</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<script>
+    function cancelOrder(orderId) {
+        if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+        fetch('/Order/CancelOrder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + orderId
+        })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) location.reload();
+        });
+    }
+</script>

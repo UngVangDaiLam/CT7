@@ -1,0 +1,120 @@
+﻿@model List<CartItem>
+
+@{
+    ViewData["Title"] = "Giỏ Hàng";
+    var total = Model.Sum(c => c.TotalPrice);
+}
+
+<div class="container" style="padding: 40px 0;">
+    <h1>🛒 Giỏ Hàng Của Bạn</h1>
+
+    @if (Model.Count == 0)
+    {
+        <div style="text-align: center; padding: 60px 20px; background: #f8fafc; border-radius: 12px; margin: 40px 0;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📦</div>
+            <h3>Giỏ hàng trống</h3>
+            <p style="color: #64748b; margin: 20px 0;">Hãy thêm sản phẩm để bắt đầu mua sắm!</p>
+            <a href="/" class="btn btn-primary" style="padding: 12px 28px; background: #f43f5e; color: #fff; border-radius: 8px; text-decoration: none; display: inline-block;">
+                Tiếp tục mua sắm
+            </a>
+        </div>
+    }
+    else
+    {
+        <table style="width: 100%; margin: 40px 0; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #e2e8f0;">
+                    <th style="text-align: left; padding: 15px; font-weight: 600;">Sản phẩm</th>
+                    <th style="text-align: right; padding: 15px; font-weight: 600;">Giá</th>
+                    <th style="text-align: center; padding: 15px; font-weight: 600;">Số lượng</th>
+                    <th style="text-align: right; padding: 15px; font-weight: 600;">Thành tiền</th>
+                    <th style="text-align: center; padding: 15px; font-weight: 600;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 15px;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <img src="@item.ImageUrl" alt="@item.ProductName"
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
+                                     onerror="this.src='https://picsum.photos/seed/@item.ProductId/100/100'">
+                                <strong>@item.ProductName</strong>
+                            </div>
+                        </td>
+                        <td style="text-align: right; padding: 15px; font-weight: 600;">
+                            @item.Price.ToString("N0")đ
+                        </td>
+                        <td style="text-align: center; padding: 15px;">
+                            <input type="number" min="1" value="@item.Quantity"
+                                   class="qty-input" data-product-id="@item.ProductId"
+                                   style="width: 70px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; text-align: center;">
+                        </td>
+                        <td style="text-align: right; padding: 15px; font-weight: 700; color: #f43f5e;">
+                            @item.TotalPrice.ToString("N0")đ
+                        </td>
+                        <td style="text-align: center; padding: 15px;">
+                            <button class="btn-remove" data-product-id="@item.ProductId"
+                                    style="background: #fff0f3; color: #f43f5e; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                🗑️ Xóa
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: flex-end; gap: 20px; align-items: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+            <div style="font-size: 1.3rem; font-weight: 700; color: #f43f5e;">
+                Tổng cộng: <span style="color: #1e293b;">@total.ToString("N0")đ</span>
+            </div>
+            <button id="btn-checkout"
+                    style="background: linear-gradient(135deg, #f43f5e, #be123c); color: #fff; border: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);">
+                ✓ Thanh toán
+            </button>
+            <a href="/" style="color: #f43f5e; text-decoration: none; font-weight: 600; padding: 14px 32px;">
+                ← Tiếp tục mua sắm
+            </a>
+        </div>
+    }
+</div>
+
+<script>
+    document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('change', async () => {
+            const productId = parseInt(input.dataset.productId);
+            const quantity = parseInt(input.value);
+
+            const response = await fetch('/Cart/UpdateQuantity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `productId=${productId}&quantity=${quantity}`
+            });
+
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-remove').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const productId = parseInt(btn.dataset.productId);
+            const response = await fetch('/Cart/RemoveFromCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `productId=${productId}`
+            });
+
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    });
+
+    document.getElementById('btn-checkout')?.addEventListener('click', () => {
+        alert('✓ Thanh toán thành công!\n\nCảm ơn bạn đã mua sắm tại HNTS.');
+        fetch('/Cart/ClearCart', { method: 'POST' }).then(() => location.href = '/');
+    });
+</script>

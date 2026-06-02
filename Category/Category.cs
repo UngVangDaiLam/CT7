@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using ProductModel = bt1.Product.Product;
 
 namespace bt1.Category
 {
@@ -6,9 +7,9 @@ namespace bt1.Category
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Tên danh mục không được để trống")]
+        [Required, StringLength(50)]
         public string Name { get; set; } = "";
 
-        public string? Description { get; set; }
+        public List<ProductModel>? Products { get; set; }
     }
 }

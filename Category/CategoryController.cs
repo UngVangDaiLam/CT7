@@ -11,87 +11,82 @@ namespace bt1.Category
             _categoryRepository = categoryRepository;
         }
 
-        [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> Index()
         {
-            var categories = _categoryRepository.GetAll();
-
-            return Json(categories);
+            var categories = await _categoryRepository.GetAllAsync();
+            return View(categories);
         }
 
-        [HttpGet]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> Display(int id)
         {
-            var category = _categoryRepository.GetById(id);
+            var category = await _categoryRepository.GetByIdAsync(id);
 
             if (category == null)
             {
                 return NotFound();
             }
 
-            return Json(category);
+            return View(category);
+        }
+
+        public IActionResult Add()
+        {
+            return View();
         }
 
         [HttpPost]
-        public IActionResult Add([FromBody] Category category)
+        public async Task<IActionResult> Add(Category category)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                await _categoryRepository.AddAsync(category);
+                return RedirectToAction(nameof(Index));
             }
 
-            _categoryRepository.Add(category);
-
-            return Json(new
-            {
-                success = true,
-                message = "Thêm danh mục thành công",
-                category
-            });
+            return View(category);
         }
 
-        [HttpPost]
-        public IActionResult Update([FromBody] Category category)
+        public async Task<IActionResult> Update(int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var oldCategory = _categoryRepository.GetById(category.Id);
-
-            if (oldCategory == null)
-            {
-                return NotFound();
-            }
-
-            _categoryRepository.Update(category);
-
-            return Json(new
-            {
-                success = true,
-                message = "Cập nhật danh mục thành công",
-                category
-            });
-        }
-
-        [HttpPost]
-        public IActionResult Delete(int id)
-        {
-            var category = _categoryRepository.GetById(id);
+            var category = await _categoryRepository.GetByIdAsync(id);
 
             if (category == null)
             {
                 return NotFound();
             }
 
-            _categoryRepository.Delete(id);
+            return View(category);
+        }
 
-            return Json(new
+        [HttpPost]
+        public async Task<IActionResult> Update(Category category)
+        {
+            if (ModelState.IsValid)
             {
-                success = true,
-                message = "Xóa danh mục thành công"
-            });
+                await _categoryRepository.UpdateAsync(category);
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(category);
+        }
+
+        public async Task<IActionResult> Delete(int id)
+        {
+            var category = await _categoryRepository.GetByIdAsync(id);
+
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            return View(category);
+        }
+
+        [HttpPost, ActionName("DeleteConfirmed")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            await _categoryRepository.DeleteAsync(id);
+            return RedirectToAction(nameof(Index));
         }
     }
 }

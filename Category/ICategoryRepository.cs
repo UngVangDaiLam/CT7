@@ -2,14 +2,14 @@
 {
     public interface ICategoryRepository
     {
-        IEnumerable<Category> GetAll();
+        Task<IEnumerable<Category>> GetAllAsync();
 
-        Category? GetById(int id);
+        Task<Category?> GetByIdAsync(int id);
 
-        void Add(Category category);
+        Task AddAsync(Category category);
 
-        void Update(Category category);
+        Task UpdateAsync(Category category);
 
-        void Delete(int id);
+        Task DeleteAsync(int id);
     }
 }

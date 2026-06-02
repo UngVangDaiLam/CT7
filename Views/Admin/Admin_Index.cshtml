@@ -1,0 +1,447 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Admin - Quản lý sản phẩm";
+
+    var products = ViewBag.Products as List<bt1.Product.Product> ?? new List<bt1.Product.Product>();
+    var editProduct = ViewBag.EditProduct as bt1.Product.Product;
+    var isEditing = editProduct != null;
+
+    var editPrice = isEditing
+        ? editProduct!.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        : "";
+
+    var totalProducts = products.Count;
+    var maxPrice = products.Any() ? products.Max(p => p.Price) : 0;
+    var totalValue = products.Sum(p => p.Price);
+    var outOfStock = products.Count(p => p.Status == "OutOfStock");
+}
+
+<section id="admin-page" class="page-section">
+
+    <!-- ADMIN NAVBAR -->
+    <nav class="admin-navbar" role="navigation" aria-label="Admin navigation">
+        <div class="admin-navbar-inner">
+            <div class="admin-logo">
+                🛍️ HNTS
+                <span class="admin-logo-badge">Admin</span>
+            </div>
+
+            <ul class="admin-nav-links" role="list">
+                <li>
+                    <a href="#" class="active" onclick="return false;">📦 Quản lý sản phẩm</a>
+                </li>
+                <li>
+                    <button id="admin-logout-btn" type="button">🚪 Đăng xuất</button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ADMIN LAYOUT -->
+    <div class="admin-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar" role="complementary" aria-label="Sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Tổng quan</div>
+
+                <button class="sidebar-link active" type="button">
+                    <span class="icon">📊</span> Dashboard
+                </button>
+
+                <button class="sidebar-link" type="button"
+                        onclick="document.getElementById('product-form-section').scrollIntoView({behavior:'smooth'})">
+                    <span class="icon">📦</span> Quản lý sản phẩm
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Hệ thống</div>
+
+                <button class="sidebar-link" type="button" id="sidebar-logout">
+                    <span class="icon">🚪</span> Đăng xuất
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-main" role="main">
+
+            <!-- PAGE TITLE -->
+            <div class="mb-4">
+                <h1 style="font-family:var(--font-display);font-size:1.7rem;font-weight:700;color:var(--admin-primary);letter-spacing:-0.5px;">
+                    📦 Quản lý sản phẩm
+                </h1>
+
+                <p style="color:#94a3b8;font-size:0.9rem;margin-top:4px;">
+                    Thêm, xóa và quản lý toàn bộ sản phẩm trên cửa hàng bằng SQL Server.
+                </p>
+            </div>
+
+            <!-- TEMP DATA MESSAGE -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success mb-3">
+                    ✅ @TempData["Success"]
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger mb-3">
+                    ❌ @TempData["Error"]
+                </div>
+            }
+
+            <!-- STATS GRID -->
+            <div class="stats-grid">
+                <div class="stat-card shadow-sm">
+                    <div class="stat-icon blue">📦</div>
+                    <div class="stat-info">
+                        <div class="stat-val">@totalProducts</div>
+                        <div class="stat-lbl">Tổng sản phẩm</div>
+                    </div>
+                </div>
+
+                <div class="stat-card shadow-sm">
+                    <div class="stat-icon red">🏆</div>
+                    <div class="stat-info">
+                        <div class="stat-val" style="font-size:1.15rem;">@maxPrice.ToString("#,##0") đ</div>
+                        <div class="stat-lbl">Giá cao nhất</div>
+                    </div>
+                </div>
+
+                <div class="stat-card shadow-sm">
+                    <div class="stat-icon green">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-val" style="font-size:1.15rem;">@totalValue.ToString("#,##0") đ</div>
+                        <div class="stat-lbl">Tổng giá trị</div>
+                    </div>
+                </div>
+
+                <div class="stat-card shadow-sm">
+                    <div class="stat-icon orange">🚫</div>
+                    <div class="stat-info">
+                        <div class="stat-val">@outOfStock</div>
+                        <div class="stat-lbl">Hết hàng</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCT FORM -->
+            <div class="admin-card" id="product-form-section">
+                <div class="admin-card-header">
+                    <h3>✏️ <span id="form-title">@(isEditing ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới")</span></h3>
+                </div>
+
+                <div class="admin-card-body">
+
+                    <form class="product-form"
+                          action="@Url.Action(isEditing ? "EditProduct" : "AddProduct", "Admin")"
+                          method="post"
+                          enctype="multipart/form-data">
+
+                        @if (isEditing)
+                        {
+                            <input type="hidden" name="Id" value="@editProduct!.Id" />
+                        }
+
+                        <div class="admin-form-group">
+                            <label for="Name">
+                                Tên sản phẩm <span style="color:var(--accent)">*</span>
+                            </label>
+                            <input type="text"
+                                   id="Name"
+                                   name="Name"
+                                   value="@(isEditing ? editProduct!.Name : "")"
+                                   placeholder="Ví dụ: Áo Thun Cotton Cao Cấp"
+                                   required />
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="Price">
+                                Giá bán (VNĐ) <span style="color:var(--accent)">*</span>
+                            </label>
+                            <input type="number"
+                                   id="Price"
+                                   name="Price"
+                                   value="@editPrice"
+                                   placeholder="Ví dụ: 299000"
+                                   min="0"
+                                   step="1000"
+                                   required />
+                        </div>
+
+                        <div class="admin-form-group form-full">
+                            <label for="Description">
+                                Mô tả chi tiết <span style="color:var(--accent)">*</span>
+                            </label>
+                            <textarea id="Description"
+                                      name="Description"
+                                      rows="3"
+                                      placeholder="Nhập mô tả chi tiết sản phẩm..."
+                                      required>@(isEditing ? editProduct!.Description : "")</textarea>
+                        </div>
+
+                        @if (isEditing && !string.IsNullOrEmpty(editProduct!.ImageUrl))
+                        {
+                            <div class="admin-form-group form-full">
+                                <label>Ảnh hiện tại</label>
+
+                                <div style="margin-top:8px;">
+                                    <img src="@editProduct.ImageUrl"
+                                         alt="@editProduct.Name"
+                                         style="width:120px;height:90px;object-fit:cover;border-radius:10px;" />
+                                </div>
+                            </div>
+                        }
+
+                        <div class="admin-form-group form-full">
+                            <label for="imageFiles">
+                                Ảnh sản phẩm
+                                <span style="font-weight:400;color:var(--text-light);font-size:0.82rem;">
+                                    @(isEditing ? "Nếu không chọn ảnh mới, ảnh cũ sẽ được giữ nguyên" : "Chọn 1 hoặc nhiều ảnh")
+                                </span>
+                            </label>
+
+                            <div class="multi-img-upload-wrap">
+                                <input type="file"
+                                       id="imageFiles"
+                                       name="imageFiles"
+                                       accept="image/*"
+                                       multiple />
+                                <span class="multi-img-hint">📎 Chọn ảnh sản phẩm</span>
+                            </div>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="Badge">Badge</label>
+                            <select id="Badge" name="Badge">
+                                @if (!isEditing || editProduct!.Badge == "Hot")
+                                {
+                                    <option value="Hot" selected>🔥 Hot</option>
+                                }
+                                else
+                                {
+                                    <option value="Hot">🔥 Hot</option>
+                                }
+
+                                @if (isEditing && editProduct!.Badge == "Sale")
+                                {
+                                    <option value="Sale" selected>💸 Sale</option>
+                                }
+                                else
+                                {
+                                    <option value="Sale">💸 Sale</option>
+                                }
+
+                                @if (isEditing && editProduct!.Badge == "New")
+                                {
+                                    <option value="New" selected>🆕 New</option>
+                                }
+                                else
+                                {
+                                    <option value="New">🆕 New</option>
+                                }
+
+                                @if (isEditing && string.IsNullOrEmpty(editProduct!.Badge))
+                                {
+                                    <option value="" selected>— Không có —</option>
+                                }
+                                else
+                                {
+                                    <option value="">— Không có —</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="Status">Trạng thái sản phẩm</label>
+                            <select id="Status" name="Status">
+                                @if (!isEditing || editProduct!.Status == "InStock")
+                                {
+                                    <option value="InStock" selected>🟢 Còn hàng</option>
+                                }
+                                else
+                                {
+                                    <option value="InStock">🟢 Còn hàng</option>
+                                }
+
+                                @if (isEditing && editProduct!.Status == "OutOfStock")
+                                {
+                                    <option value="OutOfStock" selected>🔴 Hết hàng</option>
+                                }
+                                else
+                                {
+                                    <option value="OutOfStock">🔴 Hết hàng</option>
+                                }
+
+                                @if (isEditing && editProduct!.Status == "ComingSoon")
+                                {
+                                    <option value="ComingSoon" selected>🟡 Sắp về hàng</option>
+                                }
+                                else
+                                {
+                                    <option value="ComingSoon">🟡 Sắp về hàng</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="admin-form-group" id="stock-qty-wrap">
+                            <label for="StockQty">Số lượng tồn kho</label>
+                            <input type="number"
+                                   id="StockQty"
+                                   name="StockQty"
+                                   value="@(isEditing ? editProduct!.StockQty : "")"
+                                   placeholder="Ví dụ: 50"
+                                   min="0" />
+                        </div>
+
+                        <div class="form-actions">
+                            @if (isEditing)
+                            {
+                                <button class="btn-admin-primary" type="submit" style="background:#059669;">
+                                    ✅ Cập nhật sản phẩm
+                                </button>
+
+                                <a asp-controller="Admin"
+                                   asp-action="Index"
+                                   class="btn-admin-cancel"
+                                   style="text-decoration:none;display:inline-flex;align-items:center;">
+                                    ✕ Hủy
+                                </a>
+                            }
+                            else
+                            {
+                                <button class="btn-admin-primary" type="submit">
+                                    ➕ Thêm sản phẩm
+                                </button>
+                            }
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- PRODUCTS TABLE -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>📋 Danh sách sản phẩm</h3>
+                </div>
+
+                <div class="admin-card-body" style="padding:0;">
+                    <div class="products-table-wrap">
+                        <table class="products-table table table-hover table-striped"
+                               role="table"
+                               aria-label="Danh sách sản phẩm">
+
+                            <thead>
+                                <tr>
+                                    <th scope="col">Ảnh</th>
+                                    <th scope="col">Tên sản phẩm</th>
+                                    <th scope="col">Giá bán</th>
+                                    <th scope="col">Mô tả</th>
+                                    <th scope="col">Badge</th>
+                                    <th scope="col">Tồn kho</th>
+                                    <th scope="col">Thao tác</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @if (products.Any())
+                                {
+                                    foreach (var product in products)
+                                    {
+                                        var imgCount = product.Images != null ? product.Images.Count : 0;
+
+                                        <tr>
+                                            <td>
+                                                <div class="table-img-wrap">
+                                                    <img class="table-img"
+                                                         src="@product.ImageUrl"
+                                                         alt="@product.Name"
+                                                         onerror="this.src='https://picsum.photos/seed/@product.Id/100/100'" />
+
+                                                    @if (imgCount > 1)
+                                                    {
+                                                        <span class="img-count-badge">+@(imgCount - 1)</span>
+                                                    }
+                                                </div>
+                                            </td>
+
+                                            <td class="table-name">@product.Name</td>
+
+                                            <td class="table-price">@product.Price.ToString("#,##0") đ</td>
+
+                                            <td class="table-desc">@product.Description</td>
+
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(product.Badge))
+                                                {
+                                                    <span class="product-badge">@product.Badge</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>—</span>
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @if (product.Status == "ComingSoon")
+                                                {
+                                                    <span class="stock-badge stock-coming">🟡 Sắp về hàng</span>
+                                                }
+                                                else if (product.Status == "OutOfStock")
+                                                {
+                                                    <span class="stock-badge stock-out">🔴 Hết hàng</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="stock-badge stock-in">🟢 Còn hàng</span>
+                                                    <small class="stock-qty">(@product.StockQty cái)</small>
+                                                }
+                                            </td>
+
+                                            <td>
+                                                <div style="display:flex;gap:8px;align-items:center;">
+                                                    <a asp-controller="Admin"
+                                                       asp-action="Index"
+                                                       asp-route-editId="@product.Id"
+                                                       class="btn-edit"
+                                                       style="text-decoration:none;">
+                                                        ✏️ Sửa
+                                                    </a>
+
+                                                    <form asp-controller="Admin"
+                                                          asp-action="DeleteProduct"
+                                                          method="post"
+                                                          onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này không?');">
+                                                        <input type="hidden" name="id" value="@product.Id" />
+                                                        <button type="submit" class="btn-delete">🗑 Xóa</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="7">
+                                            <div class="empty-state">
+                                                <div class="empty-icon">📦</div>
+                                                <p>Chưa có sản phẩm nào trong SQL Server.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</section>

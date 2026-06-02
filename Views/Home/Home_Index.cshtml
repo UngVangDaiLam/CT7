@@ -6,7 +6,7 @@
 <div id="login-page" style="display:none;"></div>
 
 <!-- ============================================================
-     MODAL ĐĂNG NHẬP
+     MODAL ĐĂNG NHẬP / ĐĂNG KÝ
      ============================================================ -->
 <div id="login-modal-overlay" class="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
     <div class="login-modal-box">
@@ -19,39 +19,110 @@
             <p>Mua sắm dễ dàng, giá tốt mỗi ngày</p>
         </div>
 
-        <form class="login-form" id="login-form" novalidate>
-            <div class="form-group">
-                <label for="username">Tên đăng nhập</label>
-                <div class="input-wrap">
-                    <span class="input-icon">👤</span>
-                    <input type="text" id="username" name="username"
-                           placeholder="Nhập tên đăng nhập"
-                           autocomplete="username" required />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Mật khẩu</label>
-                <div class="input-wrap">
-                    <span class="input-icon">🔒</span>
-                    <input type="password" id="password" name="password"
-                           placeholder="Nhập mật khẩu"
-                           autocomplete="current-password" required />
-                </div>
-            </div>
-
-            <div class="login-error" id="login-error"></div>
-
-            <button type="submit" class="login-btn" id="login-btn">
-                Đăng nhập →
+        <!-- TAB BUTTONS -->
+        <div style="display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0;">
+            <button class="login-tab-btn" data-tab="login-form-tab" type="button"
+                    style="flex: 1; padding: 15px; background: none; border: none; border-bottom: 3px solid #ff6b9d; color: #ff6b9d; font-weight: 600; cursor: pointer; font-size: 14px;">
+                🔑 Đăng nhập
             </button>
-        </form>
+            <button class="login-tab-btn" data-tab="register-form-tab" type="button"
+                    style="flex: 1; padding: 15px; background: none; border: none; border-bottom: 3px solid transparent; color: #999; font-weight: 600; cursor: pointer; font-size: 14px;">
+                📝 Đăng ký
+            </button>
+        </div>
 
-        <div class="login-hint">
-            <p>
-                <strong>Admin:</strong> admin / 123456<br />
-                <strong>User:</strong> user / 123456
-            </p>
+        <!-- FORM ĐĂNG NHẬP -->
+        <div id="login-form-tab" class="login-tab-content" style="display: block;">
+            <form class="login-form" id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="username" name="username"
+                               placeholder="Nhập tên đăng nhập"
+                               autocomplete="username" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" name="password"
+                               placeholder="Nhập mật khẩu"
+                               autocomplete="current-password" required />
+                    </div>
+                </div>
+
+                <div class="login-error" id="login-error"></div>
+
+                <button type="submit" class="login-btn" id="login-btn">
+                    Đăng nhập →
+                </button>
+            </form>
+
+            <div class="login-hint">
+                <p>
+                    <strong>Admin:</strong> admin / 123456<br />
+                    <strong>User:</strong> user / 123456
+                </p>
+            </div>
+        </div>
+
+        <!-- FORM ĐĂNG KÝ -->
+        <div id="register-form-tab" class="login-tab-content" style="display: none;">
+            <form class="login-form" id="quick-register-form" novalidate>
+                <div class="form-group">
+                    <label for="reg-username">Tên đăng nhập</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="reg-username" name="reg-username"
+                               placeholder="Nhập tên đăng nhập (3+ ký tự)" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="reg-email" name="reg-email"
+                               placeholder="Nhập email" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-fullname">Họ và tên</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="reg-fullname" name="reg-fullname"
+                               placeholder="Nhập họ và tên" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-password">Mật khẩu</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="reg-password" name="reg-password"
+                               placeholder="Nhập mật khẩu (6+ ký tự)" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-confirm-password">Xác nhận mật khẩu</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="reg-confirm-password" name="reg-confirm-password"
+                               placeholder="Nhập lại mật khẩu" required />
+                    </div>
+                </div>
+
+                <div class="login-error" id="register-error"></div>
+
+                <button type="submit" class="login-btn" id="register-btn">
+                    Đăng ký →
+                </button>
+            </form>
         </div>
 
     </div>
@@ -133,14 +204,14 @@
     <!-- CATEGORY NAV -->
     <div class="home-category-nav">
         <div class="container home-category-inner">
-            <a href="#">👗 Thời trang</a>
-            <a href="#">👟 Giày dép</a>
-            <a href="#">👜 Túi xách</a>
-            <a href="#">⌚ Đồng hồ</a>
-            <a href="#">🕶️ Kính mắt</a>
-            <a href="#">🎒 Balo</a>
-            <a href="#">🧢 Mũ nón</a>
-            <a href="#">🌟 Hot Deal</a>
+            <a href="#products-section">🤖 Gundam</a>
+            <a href="#products-section">🧩 Figure</a>
+            <a href="#products-section">🎌 Anime</a>
+            <a href="#products-section">🛠️ Tools</a>
+            <a href="#products-section">🎨 Paint / Decal</a>
+            <a href="#products-section">🧱 Display Base</a>
+            <a href="#products-section">📦 Phụ kiện</a>
+            <a href="#products-section">🔥 Hot Deal</a>
         </div>
     </div>
 
@@ -161,8 +232,8 @@
                     </h1>
 
                     <p class="hero-desc">
-                        Chuyên cung cấp sản phẩm thời trang, phụ kiện và các mặt hàng hot trend.
-                        Mua sắm dễ dàng, giá tốt mỗi ngày, giao hàng nhanh toàn quốc.
+                        Kho mô hình Gundam, Gunpla, Anime Figure và phụ kiện trưng bày chính hãng.
+                        Sưu tầm dễ dàng, mẫu mã đa dạng, giao hàng nhanh toàn quốc.
                     </p>
 
                     <div class="hero-actions">
@@ -174,7 +245,7 @@
                             <div class="hotline-icon">☎</div>
                             <div>
                                 <span>Hotline 24/7</span>
-                                <strong>0987 954 313</strong>
+                                <strong>0909 090 909</strong>
                             </div>
                         </div>
                     </div>
@@ -296,8 +367,8 @@
 
                     <div class="footer-col footer-contact">
                         <h4>Liên hệ</h4>
-                        <p><span class="icon">📍</span>123 Đường Lê Lợi, TP.HCM</p>
-                        <p><span class="icon">📞</span>0987 954 313</p>
+                        <p><span class="icon">📍</span>Phân khu Đào tạo E1, Khu Công nghệ cao, Phường Tăng Nhơn Phú, Thành phố Thủ Đức, TP. Hồ Chí Minh</p>
+                        <p><span class="icon">📞</span>0909 090 909</p>
                         <p><span class="icon">✉️</span>support@hnts.vn</p>
                         <p><span class="icon">🕐</span>8:00 – 22:00 mỗi ngày</p>
                     </div>

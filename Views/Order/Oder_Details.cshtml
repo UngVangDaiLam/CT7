@@ -1,0 +1,77 @@
+﻿@model Order
+
+@{
+    ViewData["Title"] = "Chi Tiết Đơn Hàng #" + Model.Id;
+}
+
+<div class="container" style="padding: 40px 0;">
+    <a href="/Order" style="color: #3b82f6; text-decoration: none; font-weight: 600; margin-bottom: 20px; display: inline-block;">← Quay lại</a>
+
+    <div style="background: #fff; border-radius: 12px; padding: 30px; border: 1px solid #e2e8f0; margin: 20px 0;">
+        <h2 style="margin-bottom: 20px;">Đơn Hàng #@Model.Id</h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+            <div>
+                <h3 style="color: #64748b; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px;">Thông Tin</h3>
+                <p><strong>Ngày:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><strong>Trạng thái:</strong> @Model.Status</p>
+            </div>
+            <div>
+                <h3 style="color: #64748b; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px;">Giao Hàng</h3>
+                <p><strong>Địa chỉ:</strong> @Model.ShippingAddress</p>
+                <p><strong>Điện thoại:</strong> @Model.PhoneNumber</p>
+            </div>
+        </div>
+
+        <h3 style="color: #1e293b; margin-bottom: 15px;">Chi Tiết Sản Phẩm</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+            <thead>
+                <tr style="border-bottom: 2px solid #e2e8f0;">
+                    <th style="text-align: left; padding: 12px;">Sản Phẩm</th>
+                    <th style="text-align: right; padding: 12px;">Giá</th>
+                    <th style="text-align: center; padding: 12px;">Số Lượng</th>
+                    <th style="text-align: right; padding: 12px;">Thành Tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detail in Model.OrderDetails)
+                {
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px;">@detail.ProductName</td>
+                        <td style="text-align: right; padding: 12px;">@detail.Price.ToString("N0")đ</td>
+                        <td style="text-align: center; padding: 12px;">@detail.Quantity</td>
+                        <td style="text-align: right; padding: 12px; font-weight: 600; color: #f43f5e;">@detail.TotalPrice.ToString("N0")đ</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div style="text-align: right; border-top: 2px solid #e2e8f0; padding-top: 15px;">
+            <h2 style="color: #f43f5e; margin: 0;">Tổng: @Model.TotalAmount.ToString("N0")đ</h2>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        @if (Model.Status == "Pending")
+        {
+            <button onclick="cancelOrder(@Model.Id)" style="background: #fff0f3; color: #f43f5e; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-right: 10px;">Hủy Đơn</button>
+        }
+        <a href="/" style="background: #f43f5e; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">Tiếp tục mua</a>
+    </div>
+</div>
+
+<script>
+    function cancelOrder(orderId) {
+        if (!confirm('Hủy đơn hàng?')) return;
+        fetch('/Order/CancelOrder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id=' + orderId
+        })
+        .then(r => r.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) location.href = '/Order';
+        });
+    }
+</script>
