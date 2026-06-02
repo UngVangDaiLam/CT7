@@ -3616,3 +3616,257 @@ input, textarea, select {
         transform: translateY(0);
     }
 }
+/* ============================================================
+   HEADER 2 DÒNG MỚI (MAIN HEADER + NAVIGATION)
+   Dán cuối file - dùng class mới, không đụng .home-* cũ
+   ============================================================ */
+
+/* ===== DÒNG 1: MAIN HEADER ===== */
+.main-header {
+    background: #ffffff;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.header-inner {
+    display: flex;
+    align-items: center; /* căn giữa dọc toàn dòng */
+    gap: 28px;
+    min-height: 76px;
+}
+
+/* Logo trái */
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    color: #0f172a;
+}
+
+.header-logo-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 1.25rem;
+    box-shadow: 0 10px 24px rgba(20, 184, 166, 0.25);
+}
+
+.header-logo strong {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+/* Search giữa - rộng */
+.header-search {
+    flex: 1;
+    max-width: 620px;
+    margin: 0 auto;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px; /* bo nhẹ, không pill */
+    padding: 0 16px;
+    transition: 0.2s ease;
+}
+
+    .header-search:focus-within {
+        background: #fff;
+        border-color: #2dd4bf;
+        box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.13);
+    }
+
+    .header-search .search-icon {
+        color: #14b8a6; /* icon kính lúp teal */
+        font-size: 1.05rem;
+    }
+
+    .header-search input {
+        border: none;
+        outline: none;
+        background: transparent;
+        width: 100%;
+        color: #334155;
+        font-size: 0.95rem;
+    }
+
+        .header-search input::placeholder {
+            color: #94a3b8;
+        }
+
+/* Tiện ích phải */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.header-icon-btn {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 1.45rem; /* icon to, cân khung */
+    line-height: 1;
+    display: inline-flex; /* flex center chuẩn hơn grid */
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 0 1px #e2e8f0;
+    transition: 0.2s ease;
+}
+
+    .header-icon-btn:hover {
+        background: #ecfdf5;
+        color: #0f766e; /* hover teal */
+    }
+
+/* Badge giỏ hàng - cam nổi bật */
+.cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #f97316; /* cam */
+    color: #fff;
+    border: 2px solid #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+}
+
+/* Nút tài khoản - nhỏ gọn, bo 12px (không pill to) */
+.header-account-btn {
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: #fff;
+    padding: 0 16px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 8px 20px rgba(20, 184, 166, 0.22);
+    transition: 0.2s ease;
+}
+
+    .header-account-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 26px rgba(20, 184, 166, 0.30);
+    }
+
+/* ===== DÒNG 2: NAVIGATION ===== */
+.main-navigation {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0; /* phân cách với nội dung */
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* dàn đều full width, Hot Deal luôn nằm trong khung */
+    gap: 2px;
+    min-height: 52px;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+}
+
+    .nav-menu::-webkit-scrollbar {
+        display: none;
+    }
+
+.nav-link {
+    padding: 8px 10px; /* gọn lại để 12 mục vừa khung 1200px */
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: 0.2s ease;
+}
+
+    .nav-link:hover {
+        color: #0f766e;
+        border-bottom-color: #2dd4bf; /* gạch chân teal mượt */
+    }
+
+    /* Active: chữ teal + đậm + gạch chân (không nền lớn) */
+    .nav-link.active {
+        color: #0f766e;
+        font-weight: 800;
+        border-bottom-color: #14b8a6;
+    }
+
+    /* Hot Deal nổi bật cam/đỏ gradient nhỏ */
+    .nav-link.nav-hot {
+        color: #fff;
+        background: linear-gradient(135deg, #fb923c, #f43f5e);
+        border-radius: 999px;
+        padding: 6px 12px;
+        border-bottom: none;
+        font-weight: 800;
+        box-shadow: 0 6px 16px rgba(244, 63, 94, 0.2);
+        flex-shrink: 0;
+    }
+
+        .nav-link.nav-hot:hover {
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+    .header-inner {
+        flex-wrap: wrap;
+        min-height: auto;
+        padding: 12px 0;
+        gap: 12px;
+    }
+
+    .header-search {
+        order: 3;
+        max-width: 100%;
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    /* Menu hẹp: cuộn ngang, không dàn đều */
+    .nav-menu {
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-link {
+        padding: 8px 10px;
+        font-size: 0.88rem;
+    }
+
+    /* Nút tài khoản chỉ còn icon trên mobile */
+    .header-account-btn span {
+        display: none;
+    }
+
+    .header-account-btn {
+        padding: 0 12px;
+    }
+}

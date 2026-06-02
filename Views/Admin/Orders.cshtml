@@ -1,0 +1,91 @@
+﻿@model List<Order>
+
+@{
+    ViewData["Title"] = "Quản Lý Đơn Hàng";
+}
+
+<div class="container" style="padding: 40px 0;">
+    <a href="/Admin/Dashboard" style="color: #3b82f6; text-decoration: none; font-weight: 600; margin-bottom: 20px; display: inline-block;">← Dashboard</a>
+
+    <h1>📦 Quản Lý Đơn Hàng</h1>
+
+    <!-- Filter -->
+    <div style="margin: 30px 0;">
+        <a href="/Admin/Orders" style="padding: 8px 16px; border-radius: 6px; text-decoration: none; margin-right: 10px; background: #e5e7eb; color: #1f2937;">Tất Cả</a>
+        <a href="/Admin/Orders?status=Pending" style="padding: 8px 16px; border-radius: 6px; text-decoration: none; margin-right: 10px; background: #fef08a; color: #92400e;">⏳ Chờ Xác Nhận</a>
+        <a href="/Admin/Orders?status=Confirmed" style="padding: 8px 16px; border-radius: 6px; text-decoration: none; margin-right: 10px; background: #dbeafe; color: #1e40af;">✓ Đã Xác Nhận</a>
+        <a href="/Admin/Orders?status=Shipped" style="padding: 8px 16px; border-radius: 6px; text-decoration: none; margin-right: 10px; background: #e9d5ff; color: #6b21a8;">📦 Đang Giao</a>
+        <a href="/Admin/Orders?status=Delivered" style="padding: 8px 16px; border-radius: 6px; text-decoration: none; margin-right: 10px; background: #dcfce7; color: #15803d;">✓ Đã Giao</a>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 2px solid #e5e7eb; background: #f9fafb;">
+                <th style="padding: 15px; text-align: left;">Mã Đơn</th>
+                <th style="padding: 15px; text-align: left;">Khách Hàng</th>
+                <th style="padding: 15px; text-align: left;">Ngày Đặt</th>
+                <th style="padding: 15px; text-align: right;">Tổng Tiền</th>
+                <th style="padding: 15px; text-align: center;">Trạng Thái</th>
+                <th style="padding: 15px; text-align: center;">Thao Tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 15px;"><strong>#@order.Id</strong></td>
+                    <td style="padding: 15px;">@(order.User?.FullName ?? "N/A")</td>
+                    <td style="padding: 15px;">@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td style="padding: 15px; text-align: right; font-weight: 600; color: #f43f5e;">@order.TotalAmount.ToString("N0")đ</td>
+                    <td style="padding: 15px; text-align: center;">
+                        @{
+                            var statuses = new[] { "Pending", "Confirmed", "Shipped", "Delivered", "Cancelled" };
+                        }
+                        <select onchange="updateOrderStatus(@order.Id, this.value)" style="padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+                            @foreach (var s in statuses)
+                            {
+                                if (order.Status == s)
+                                {
+                                    <option value="@s" selected>@s</option>
+                                }
+                                else
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            }
+                        </select>
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        <a href="/Order/Details/@order.Id" style="color: #3b82f6; text-decoration: none;">Chi tiết</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function updateOrderStatus(orderId, status) {
+        fetch('/Admin/UpdateOrderStatus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `orderId=${orderId}&status=${status}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ Cập nhật thành công!');
+                location.reload();
+            } else {
+                alert('❌ ' + data.message);
+            }
+        });
+    }
+</script>
+
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+</style>

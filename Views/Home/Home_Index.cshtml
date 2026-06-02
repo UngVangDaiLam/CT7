@@ -133,87 +133,69 @@
      ============================================================ -->
 <section id="user-page" class="page-section">
 
-    <!-- TOP BAR -->
-    <div class="home-topbar">
-        <div class="container home-topbar-inner">
-            <div class="topbar-left">
-                <span>📞 Hotline: <strong>0987 954 313</strong></span>
-                <span>💬 Chat ngay</span>
-                <span>📍 Giao hàng toàn quốc</span>
-            </div>
-
-            <div class="topbar-right">
-                <span>🔄 Đổi trả 7 ngày</span>
-                <span>🚚 Miễn phí đơn từ 500K</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN HEADER -->
-    <header class="home-header">
-        <div class="container home-header-inner">
-            <a href="/" class="home-logo">
-                <div class="home-logo-mark">🛍️</div>
-                <div>
-                    <strong>HNTS</strong>
-                    <span>Mua sắm dễ dàng</span>
-                </div>
+    <!-- ============================================================
+         MAIN HEADER (Dòng 1): Logo - Search - Tiện ích
+         ============================================================ -->
+    <header class="main-header">
+        <div class="container header-inner">
+            <!-- Logo trái -->
+            <a href="/" class="header-logo">
+                <div class="header-logo-mark">🛍️</div>
+                <strong>HNTS</strong>
             </a>
 
-            <nav class="home-menu">
-                <a href="/" class="active">Trang chủ</a>
-                <a href="#products-section">Sản phẩm</a>
-                <a href="#promo-section">Khuyến mãi</a>
-                <a href="#home-about">Giới thiệu</a>
-                <a href="#home-footer">Liên hệ</a>
-            </nav>
+            <!-- Search giữa -->
+            <div class="header-search">
+                <span class="search-icon">🔍</span>
+                <input type="search" placeholder="Tìm kiếm Gundam, Figure, dụng cụ..." />
+            </div>
 
-            <div class="home-actions">
-                <div class="home-search">
-                    <span>🔍</span>
-                    <input type="search" placeholder="Tìm kiếm sản phẩm..." />
-                </div>
+            <!-- Tiện ích phải -->
+            <div class="header-actions">
+                <button class="header-icon-btn" type="button" title="Yêu thích">♡</button>
 
-                <button class="home-icon-btn" type="button" title="Yêu thích">♡</button>
-
-                <button class="home-icon-btn nav-cart-btn" type="button" title="Giỏ hàng">
+                <button class="header-icon-btn nav-cart-btn" type="button" title="Giỏ hàng">
                     🛒
-                    <span class="cart-count" id="cart-count" style="display:none;">0</span>
+                    <span class="cart-badge cart-count" id="cart-count" style="display:none;">0</span>
                 </button>
 
                 <div id="nav-login-wrap">
-                    <button class="home-login-btn" id="nav-login-btn" type="button">
-                        🔑 Đăng nhập
+                    <button class="header-account-btn" id="nav-login-btn" type="button">
+                        👤 <span>Đăng nhập</span>
                     </button>
                 </div>
 
                 <div id="nav-logout-wrap" style="display:none;">
                     <span id="nav-username" class="nav-username-text"></span>
-                    <button class="home-login-btn" id="user-logout-btn" type="button">
-                        Đăng xuất
-                    </button>
+                    <button class="header-account-btn" id="user-logout-btn" type="button">Đăng xuất</button>
                 </div>
-            </div>
 
-            <button class="hamburger" id="hamburger" aria-label="Mở menu" aria-expanded="false" type="button">
-                <span></span><span></span><span></span>
-            </button>
+                <button class="hamburger" id="hamburger" aria-label="Mở menu" aria-expanded="false" type="button" style="display:none;">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- CATEGORY NAV -->
-    <div class="home-category-nav">
-        <div class="container home-category-inner">
-            <a href="#products-section">🤖 Gundam</a>
-            <a href="#products-section">🧩 Figure</a>
-            <a href="#products-section">🎌 Anime</a>
-            <a href="#products-section">🛠️ Tools</a>
-            <a href="#products-section">🎨 Paint / Decal</a>
-            <a href="#products-section">🧱 Display Base</a>
-            <a href="#products-section">📦 Phụ kiện</a>
-            <a href="#products-section">🔥 Hot Deal</a>
+    <!-- ============================================================
+         NAVIGATION (Dòng 2): Menu ngang gọn
+         ============================================================ -->
+    <nav class="main-navigation">
+        <div class="container nav-menu">
+            <a href="/" class="nav-link active">Trang chủ</a>
+            <a href="#products-section" class="nav-link">Gundam</a>
+            <a href="#products-section" class="nav-link">Figure</a>
+            <a href="#products-section" class="nav-link">Anime</a>
+            <a href="#products-section" class="nav-link">Dụng cụ</a>
+            <a href="#products-section" class="nav-link">Paint / Decal</a>
+            <a href="#products-section" class="nav-link">Display Base</a>
+            <a href="#products-section" class="nav-link">Phụ kiện</a>
+            <a href="#promo-section" class="nav-link">Khuyến mãi</a>
+            <a href="#home-about" class="nav-link">Giới thiệu</a>
+            <a href="#home-footer" class="nav-link">Liên hệ</a>
+            <a href="#products-section" class="nav-link nav-hot">🔥 Hot Deal</a>
         </div>
-    </div>
+    </nav>
 
     <div class="user-scroll-wrap" id="user-scroll-wrap">
 

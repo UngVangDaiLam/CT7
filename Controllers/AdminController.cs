@@ -16,6 +16,10 @@ namespace bt1.Controllers
             _context = context;
         }
 
+        // ====================================================
+        // QUẢN LÝ SẢN PHẨM (giữ nguyên)
+        // ====================================================
+
         public async Task<IActionResult> Index(int? editId)
         {
             var products = await _context.Products
@@ -320,6 +324,134 @@ namespace bt1.Controllers
                 success = true,
                 message = "Đã xóa ảnh."
             });
+        }
+
+        // ====================================================
+        // DASHBOARD - THỐNG KÊ (mới)
+        // ====================================================
+
+        public async Task<IActionResult> Dashboard()
+        {
+            if (!IsAdmin())
+                return RedirectToAction("Index", "Home");
+
+            var totalOrders = await _context.Orders.CountAsync();
+            var totalRevenue = await _context.Orders.SumAsync(o => o.TotalAmount);
+            var totalProducts = await _context.Products.CountAsync();
+            var totalUsers = await _context.Users.CountAsync();
+
+            var recentOrders = await _context.Orders
+                .OrderByDescending(o => o.OrderDate)
+                .Take(5)
+                .Include(o => o.User)
+                .ToListAsync();
+
+            var viewModel = new
+            {
+                TotalOrders = totalOrders,
+                TotalRevenue = totalRevenue,
+                TotalProducts = totalProducts,
+                TotalUsers = totalUsers,
+                RecentOrders = recentOrders
+            };
+
+            return View(viewModel);
+        }
+
+        // ====================================================
+        // QUẢN LÝ ĐƠN HÀNG (mới)
+        // ====================================================
+
+        public async Task<IActionResult> Orders(string status = "")
+        {
+            if (!IsAdmin())
+                return RedirectToAction("Index", "Home");
+
+            var query = _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(o => o.Status == status);
+            }
+
+            var orders = await query.OrderByDescending(o => o.OrderDate).ToListAsync();
+
+            ViewBag.Status = status;
+            return View(orders);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateOrderStatus(int orderId, string status)
+        {
+            if (!IsAdmin())
+                return Json(new { success = false, message = "Không có quyền." });
+
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null)
+                return Json(new { success = false, message = "Đơn hàng không tồn tại." });
+
+            order.Status = status;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Cập nhật thành công!" });
+        }
+
+        // ====================================================
+        // QUẢN LÝ USER (mới)
+        // ====================================================
+
+        public async Task<IActionResult> Users()
+        {
+            if (!IsAdmin())
+                return RedirectToAction("Index", "Home");
+
+            var users = await _context.Users.ToListAsync();
+            return View(users);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeUserRole(int userId, string role)
+        {
+            if (!IsAdmin())
+                return Json(new { success = false, message = "Không có quyền." });
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return Json(new { success = false, message = "User không tồn tại." });
+
+            user.Role = role;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Cập nhật role thành công!" });
+        }
+
+        // ====================================================
+        // XEM REVIEW (mới - chỉ xem)
+        // ====================================================
+
+        public async Task<IActionResult> Reviews()
+        {
+            if (!IsAdmin())
+                return RedirectToAction("Index", "Home");
+
+            var reviews = await _context.ProductReviews
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return View(reviews);
+        }
+
+        // ====================================================
+        // HELPER METHODS
+        // ====================================================
+
+        private bool IsAdmin()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            return role == "Admin";
         }
 
         private async Task<CategoryModel> GetOrCreateCategory(int? categoryId)

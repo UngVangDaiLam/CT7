@@ -1,0 +1,77 @@
+﻿@model dynamic
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container" style="padding: 40px 0;">
+    <h1>📊 Admin Dashboard</h1>
+
+    <!-- Stats -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 40px 0;">
+        <!-- Total Orders -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 30px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: bold;">@Model.TotalOrders</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Tổng Đơn Hàng</div>
+        </div>
+
+        <!-- Total Revenue -->
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; padding: 30px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">@Model.TotalRevenue.ToString("N0")đ</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Doanh Thu</div>
+        </div>
+
+        <!-- Total Products -->
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; padding: 30px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: bold;">@Model.TotalProducts</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Sản Phẩm</div>
+        </div>
+
+        <!-- Total Users -->
+        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #fff; padding: 30px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: bold;">@Model.TotalUsers</div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">Người Dùng</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 40px 0;">
+        <a href="/Admin/Orders" style="background: #3b82f6; color: #fff; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">📦 Quản Lý Đơn Hàng</a>
+        <a href="/Admin/Products" style="background: #8b5cf6; color: #fff; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">🛍️ Quản Lý Sản Phẩm</a>
+        <a href="/Admin/Users" style="background: #ec4899; color: #fff; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">👥 Quản Lý User</a>
+        <a href="/Admin/Reviews" style="background: #f59e0b; color: #fff; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">⭐ Quản Lý Review</a>
+    </div>
+
+    <!-- Recent Orders -->
+    <h2 style="margin-top: 50px; margin-bottom: 20px;">📋 Đơn Hàng Gần Đây</h2>
+    <table style="width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden;">
+        <thead>
+            <tr style="background: #f3f4f6; border-bottom: 2px solid #e5e7eb;">
+                <th style="padding: 15px; text-align: left;">Mã Đơn</th>
+                <th style="padding: 15px; text-align: left;">Khách Hàng</th>
+                <th style="padding: 15px; text-align: right;">Tổng Tiền</th>
+                <th style="padding: 15px; text-align: center;">Trạng Thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model.RecentOrders)
+            {
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 15px;"><strong>#@order.Id</strong></td>
+                    <td style="padding: 15px;">@order.User?.FullName ?? "N/A"</td>
+                    <td style="padding: 15px; text-align: right; font-weight: 600; color: #f43f5e;">@order.TotalAmount.ToString("N0")đ</td>
+                    <td style="padding: 15px; text-align: center;">
+                        <span style="background: #dbeafe; color: #1e40af; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">@order.Status</span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+</style>
