@@ -22,7 +22,7 @@ function checkAuthStatus() {
             if (data.isLoggedIn) {
                 if (loginWrap) loginWrap.style.display = 'none';
                 if (logoutWrap) {
-                    logoutWrap.style.display = 'block';
+                    logoutWrap.style.display = 'flex';
                     const usernameStat = document.getElementById('nav-username');
                     if (usernameStat) {
                         usernameStat.textContent = '👤 ' + data.fullName;
@@ -501,17 +501,6 @@ function showPage(page) {
         loginPageEl.style.display = 'none';
     }
 
-    if (userPageEl) {
-        userPageEl.classList.remove('d-none');
-
-        initProducts().then(() => {
-            renderUserProducts(getProducts());
-            updateCartCount();
-            initNavbarScroll();
-            initHamburger();
-            updateNavbarAuthState();
-        });
-    }
 
     if (adminPageEl) {
         adminPageEl.classList.remove('d-none');
@@ -708,14 +697,19 @@ tabBtns.forEach(btn => {
  * Xóa session, quay về user page (không redirect đến login)
  */
 function handleLogout() {
+    // Xoa trang thai client (ca 2 he thong)
     sessionStorage.removeItem(STORAGE_KEYS.user);
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    localStorage.removeItem('fullName');
+    localStorage.removeItem('role');
 
-    if (window.location.pathname.toLowerCase().startsWith('/admin')) {
-        window.location.href = '/';
-        return;
-    }
-
-    showPage('user');
+    // Xoa session phia server roi ve trang chu
+    fetch('/Account/Logout', { method: 'POST' })
+        .catch(function () { })
+        .finally(function () {
+            window.location.href = '/';
+        });
 }
 
 /** Lấy thông tin user đang đăng nhập */
@@ -730,15 +724,19 @@ function getCurrentUser() {
  * Cập nhật hiển thị nút đăng nhập / đăng xuất + tên user trên navbar
  */
 function updateNavbarAuthState() {
+    // Uu tien trang thai dang nhap THAT tu server (checkAuthStatus luu vao localStorage)
+    const serverUserId = localStorage.getItem('userId');
+    const serverName = localStorage.getItem('fullName') || localStorage.getItem('username');
     const user = getCurrentUser();
+
     const loginWrap = document.getElementById('nav-login-wrap');
     const logoutWrap = document.getElementById('nav-logout-wrap');
     const usernameEl = document.getElementById('nav-username');
 
-    if (user) {
+    if (serverUserId || user) {
         if (loginWrap) loginWrap.style.display = 'none';
-        if (logoutWrap) logoutWrap.style.display = '';
-        if (usernameEl) usernameEl.textContent = `👤 ${user.username}`;
+        if (logoutWrap) logoutWrap.style.display = 'flex';
+        if (usernameEl) usernameEl.textContent = '👤 ' + (serverName || (user && user.username) || '');
     } else {
         if (loginWrap) loginWrap.style.display = '';
         if (logoutWrap) logoutWrap.style.display = 'none';

@@ -3870,3 +3870,17 @@ input, textarea, select {
         padding: 0 12px;
     }
 }
+
+/* Cụm đăng xuất (tên user + nút) trong header mới */
+#nav-logout-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-username-text {
+    font-weight: 700;
+    color: #0f766e;
+    font-size: 0.92rem;
+    white-space: nowrap;
+}

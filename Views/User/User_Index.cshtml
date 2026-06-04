@@ -1,342 +1,127 @@
-﻿@using Microsoft.AspNetCore.Http
+﻿@model IEnumerable<bt1.Product.Product>
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "HNTS - Người dùng";
-
-    // Trang User dành cho người đã đăng nhập -> đọc session để hiện nút Đăng xuất
-    var sessionUserId = Context.Session.GetInt32("UserId");
-    var sessionName = Context.Session.GetString("FullName")
-                      ?? Context.Session.GetString("Username")
-                      ?? "Tài khoản";
-    var isLoggedIn = sessionUserId.HasValue;
 }
 
-<div id="login-page" style="display:none;"></div>
+<section id="user-page" class="page-section ">
 
-<!-- ============================================================
-     MODAL ĐĂNG NHẬP / ĐĂNG KÝ
-     ============================================================ -->
-<div id="login-modal-overlay" class="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
-    <div class="login-modal-box">
-
-        <button class="login-modal-close" id="login-modal-close" type="button" aria-label="Đóng">✕</button>
-
-        <div class="login-logo">
-            <div class="logo-icon">🛍️</div>
-            <h2>HNTS</h2>
-            <p>Mua sắm dễ dàng, giá tốt mỗi ngày</p>
-        </div>
-
-        <!-- TAB BUTTONS -->
-        <div style="display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0;">
-            <button class="login-tab-btn" data-tab="login-form-tab" type="button"
-                    style="flex: 1; padding: 15px; background: none; border: none; border-bottom: 3px solid #ff6b9d; color: #ff6b9d; font-weight: 600; cursor: pointer; font-size: 14px;">
-                🔑 Đăng nhập
-            </button>
-            <button class="login-tab-btn" data-tab="register-form-tab" type="button"
-                    style="flex: 1; padding: 15px; background: none; border: none; border-bottom: 3px solid transparent; color: #999; font-weight: 600; cursor: pointer; font-size: 14px;">
-                📝 Đăng ký
-            </button>
-        </div>
-
-        <!-- FORM ĐĂNG NHẬP -->
-        <div id="login-form-tab" class="login-tab-content" style="display: block;">
-            <form class="login-form" id="login-form" novalidate>
-                <div class="form-group">
-                    <label for="username">Tên đăng nhập</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">👤</span>
-                        <input type="text" id="username" name="username"
-                               placeholder="Nhập tên đăng nhập"
-                               autocomplete="username" required />
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Mật khẩu</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="password" name="password"
-                               placeholder="Nhập mật khẩu"
-                               autocomplete="current-password" required />
-                    </div>
-                </div>
-
-                <div class="login-error" id="login-error"></div>
-
-                <button type="submit" class="login-btn" id="login-btn">
-                    Đăng nhập →
-                </button>
-            </form>
-
-            <div class="login-hint">
-                <p>
-                    <strong>Admin:</strong> admin / 123456<br />
-                    <strong>User:</strong> user / 123456
-                </p>
-            </div>
-        </div>
-
-        <!-- FORM ĐĂNG KÝ -->
-        <div id="register-form-tab" class="login-tab-content" style="display: none;">
-            <form class="login-form" id="quick-register-form" novalidate>
-                <div class="form-group">
-                    <label for="reg-username">Tên đăng nhập</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">👤</span>
-                        <input type="text" id="reg-username" name="reg-username"
-                               placeholder="Nhập tên đăng nhập (3+ ký tự)" required />
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="reg-email">Email</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">✉️</span>
-                        <input type="email" id="reg-email" name="reg-email"
-                               placeholder="Nhập email" required />
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="reg-fullname">Họ và tên</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">👤</span>
-                        <input type="text" id="reg-fullname" name="reg-fullname"
-                               placeholder="Nhập họ và tên" required />
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="reg-password">Mật khẩu</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="reg-password" name="reg-password"
-                               placeholder="Nhập mật khẩu (6+ ký tự)" required />
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="reg-confirm-password">Xác nhận mật khẩu</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="reg-confirm-password" name="reg-confirm-password"
-                               placeholder="Nhập lại mật khẩu" required />
-                    </div>
-                </div>
-
-                <div class="login-error" id="register-error"></div>
-
-                <button type="submit" class="login-btn" id="register-btn">
-                    Đăng ký →
-                </button>
-            </form>
-        </div>
-
-    </div>
-</div>
-
-<!-- ============================================================
-     TRANG HOME / USER
-     ============================================================ -->
-<section id="user-page" class="page-section">
-
-    <!-- ============================================================
-         MAIN HEADER (Dòng 1): Logo - Search - Tiện ích
-         ============================================================ -->
-    <header class="main-header">
-        <div class="container header-inner">
-            <!-- Logo trái -->
-            <a href="/" class="header-logo">
-                <div class="header-logo-mark">🛍️</div>
-                <strong>HNTS</strong>
+    <nav class="navbar" id="user-navbar" role="navigation" aria-label="Điều hướng chính">
+        <div class="container navbar-inner">
+            <a href="#" class="nav-logo" aria-label="HNTS Trang chủ" onclick="return false;">
+                🛍️ HomNayToi<span class="dot">Suy</span>
             </a>
-
-            <!-- Search giữa -->
-            <div class="header-search">
-                <span class="search-icon">🔍</span>
-                <input type="search" placeholder="Tìm kiếm Gundam, Figure, dụng cụ..." />
-            </div>
-
-            <!-- Tiện ích phải -->
-            <div class="header-actions">
-                <button class="header-icon-btn" type="button" title="Yêu thích">♡</button>
-
-                <button class="header-icon-btn nav-cart-btn" type="button" title="Giỏ hàng">
-                    🛒
-                    <span class="cart-badge cart-count" id="cart-count" style="display:none;">0</span>
-                </button>
-
-                <div id="nav-login-wrap" style="@(isLoggedIn ? "display:none;" : "")">
-                    <button class="header-account-btn" id="nav-login-btn" type="button">
-                        👤 <span>Đăng nhập</span>
-                    </button>
-                </div>
-
-                <div id="nav-logout-wrap" style="@(isLoggedIn ? "" : "display:none;")">
-                    <span id="nav-username" class="nav-username-text">@sessionName</span>
-                    <button class="header-account-btn" id="user-logout-btn" type="button">Đăng xuất</button>
-                </div>
-
-                <button class="hamburger" id="hamburger" aria-label="Mở menu" aria-expanded="false" type="button" style="display:none;">
-                    <span></span><span></span><span></span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- ============================================================
-         NAVIGATION (Dòng 2): Menu ngang gọn
-         ============================================================ -->
-    <nav class="main-navigation">
-        <div class="container nav-menu">
-            <a href="/" class="nav-link active">Trang chủ</a>
-            <a href="#products-section" class="nav-link">Gundam</a>
-            <a href="#products-section" class="nav-link">Figure</a>
-            <a href="#products-section" class="nav-link">Anime</a>
-            <a href="#products-section" class="nav-link">Dụng cụ</a>
-            <a href="#products-section" class="nav-link">Paint / Decal</a>
-            <a href="#products-section" class="nav-link">Display Base</a>
-            <a href="#products-section" class="nav-link">Phụ kiện</a>
-            <a href="#promo-section" class="nav-link">Khuyến mãi</a>
-            <a href="#home-about" class="nav-link">Giới thiệu</a>
-            <a href="#home-footer" class="nav-link">Liên hệ</a>
-            <a href="#products-section" class="nav-link nav-hot">🔥 Hot Deal</a>
+            <ul class="nav-links" id="nav-links" role="list">
+                <li><a href="#" onclick="scrollUserTop()">Trang chủ</a></li>
+                <li><a href="#" id="nav-products">Sản phẩm</a></li>
+                <li>
+                    <a href="#" class="nav-cart-btn" aria-label="Giỏ hàng">
+                        🛒 Giỏ hàng
+                        <span class="cart-count" id="cart-count" style="display:none">0</span>
+                    </a>
+                </li>
+                <li id="nav-login-wrap">
+                    <button class="nav-login-btn" id="nav-login-btn" type="button">🔑 Đăng nhập</button>
+                </li>
+                <li id="nav-logout-wrap" style="display:none;">
+                    <span id="nav-username" class="nav-username-text"></span>
+                    <button class="nav-logout" id="user-logout-btn" type="button">Đăng xuất</button>
+                </li>
+            </ul>
+            <button class="hamburger" id="hamburger" aria-label="Mở menu" aria-expanded="false" type="button">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </nav>
 
     <div class="user-scroll-wrap" id="user-scroll-wrap">
-
-        <!-- HERO -->
-        <section class="aquarium-hero">
-            <div class="aquarium-overlay"></div>
-
-            <div class="container aquarium-hero-inner">
-                <div class="hero-copy">
-                    <div class="hero-status">● CỬA HÀNG ĐANG MỞ CỬA</div>
-
-                    <p class="hero-welcome">Welcome to</p>
-
+        <section class="hero" role="banner">
+            <div class="hero-bg-art"></div>
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge">✨ Ưu đãi hàng ngày</div>
                     <h1>
-                        HNTS <span>STORE</span>
+                        Mua sắm dễ dàng,
+                        <span class="highlight">giá tốt mỗi ngày</span>
                     </h1>
-
-                    <p class="hero-desc">
-                        Kho mô hình Gundam, Gunpla, Anime Figure và phụ kiện trưng bày chính hãng.
-                        Sưu tầm dễ dàng, mẫu mã đa dạng, giao hàng nhanh toàn quốc.
+                    <p>
+                        Khám phá hàng ngàn sản phẩm chất lượng cao với giá cả phải chăng.
+                        Giao hàng nhanh, đổi trả miễn phí trong 30 ngày.
                     </p>
-
-                    <div class="hero-actions">
-                        <button class="hero-main-btn" id="hero-cta" type="button">
-                            Khám phá ngay →
-                        </button>
-
-                        <div class="hero-hotline">
-                            <div class="hotline-icon">☎</div>
-                            <div>
-                                <span>Hotline 24/7</span>
-                                <strong>0909 090 909</strong>
-                            </div>
+                    <div class="hero-btns">
+                        <button class="btn-primary" id="hero-cta" type="button">Xem sản phẩm 👇</button>
+                        <button class="btn-secondary" type="button">Ưu đãi hôm nay 🔥</button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-num">10K<span>+</span></div>
+                            <div class="stat-label">Sản phẩm</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-num">50K<span>+</span></div>
+                            <div class="stat-label">Khách hàng</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-num">99<span>%</span></div>
+                            <div class="stat-label">Hài lòng</div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- PROMO -->
-        <section id="promo-section" class="home-benefits">
-            <div class="container home-benefits-grid">
-                <div class="benefit-item">
-                    <span>🚚</span>
-                    <div>
-                        <strong>Miễn phí vận chuyển</strong>
-                        <p>Cho đơn hàng từ 500K</p>
-                    </div>
-                </div>
-
-                <div class="benefit-item">
-                    <span>🔄</span>
-                    <div>
-                        <strong>Đổi trả 7 ngày</strong>
-                        <p>Hoàn tiền nếu sản phẩm lỗi</p>
-                    </div>
-                </div>
-
-                <div class="benefit-item">
-                    <span>💳</span>
-                    <div>
-                        <strong>Thanh toán bảo mật</strong>
-                        <p>Nhiều phương thức tiện lợi</p>
-                    </div>
-                </div>
-
-                <div class="benefit-item">
-                    <span>🎁</span>
-                    <div>
-                        <strong>Ưu đãi thành viên</strong>
-                        <p>Nhiều voucher hấp dẫn</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ABOUT -->
-        <section id="home-about" class="home-about">
-            <div class="container home-about-inner">
-                <div>
-                    <span class="section-tag">Về HNTS</span>
-                    <h2>Mua sắm nhanh, đẹp và tiện lợi</h2>
-                    <p>
-                        HNTS hướng đến trải nghiệm mua sắm hiện đại với giao diện dễ dùng,
-                        sản phẩm rõ ràng, trạng thái tồn kho minh bạch và giỏ hàng tiện lợi.
-                    </p>
-                </div>
-
-                <div class="about-stats">
-                    <div>
-                        <strong>10K+</strong>
-                        <span>Sản phẩm</span>
-                    </div>
-                    <div>
-                        <strong>50K+</strong>
-                        <span>Khách hàng</span>
-                    </div>
-                    <div>
-                        <strong>99%</strong>
-                        <span>Hài lòng</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- PRODUCTS -->
         <main>
-            <section id="products-section" class="section home-products-section">
+            <section id="products-section" class="section">
                 <div class="container">
                     <header class="section-header">
                         <div class="section-tag">🛒 Sản phẩm</div>
-                        <h2>Sản phẩm nổi bật</h2>
+                        <h2>Khám phá bộ sưu tập</h2>
                         <p>Những sản phẩm được yêu thích nhất, chọn lọc kỹ lưỡng cho bạn</p>
                     </header>
 
-                    <div class="row row-cols-10 g-3" id="product-grid" role="list" aria-label="Danh sách sản phẩm">
-                        <!-- Products injected by JS -->
+                    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4" id="product-grid" role="list" aria-label="Danh sách sản phẩm">
+
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var p in Model)
+                            {
+                                <div class="col">
+                                    <div class="card h-100 shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
+                                        <img src="@(p.Images != null && p.Images.Any() ? p.Images.First().Url : "/images/default-product.jpg")" class="card-img-top" alt="@p.Name" style="height: 220px; object-fit: cover;">
+
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title text-truncate" style="font-size: 1.1rem; font-weight: 600;" title="@p.Name">@p.Name</h5>
+
+                                            <p class="card-text text-danger fw-bold mb-3" style="font-size: 1.2rem;">
+                                                @string.Format("{0:N0} đ", p.Price)
+                                            </p>
+
+                                            <button class="btn btn-primary w-100 mt-auto" onclick="addToCart(@p.Id)" style="border-radius: 8px; font-weight: 500;">
+                                                Thêm vào giỏ
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12 text-center py-5">
+                                <p style="font-size: 1.2rem; color: #6b6b8a;">Hiện chưa có sản phẩm nào trong hệ thống.</p>
+                            </div>
+                        }
+
                     </div>
                 </div>
             </section>
         </main>
 
-        <!-- FOOTER -->
-        <footer class="footer home-footer" id="home-footer" role="contentinfo">
+        <footer class="footer" role="contentinfo">
             <div class="container">
                 <div class="footer-grid">
                     <div class="footer-brand">
                         <div class="logo-text">🛍️ HNTS</div>
-                        <p>
-                            Website mua sắm trực tuyến hiện đại, hỗ trợ xem sản phẩm,
-                            thêm giỏ hàng, đánh giá sản phẩm và quản lý trạng thái hàng hóa.
-                        </p>
-
+                        <p>Nền tảng mua sắm trực tuyến hàng đầu Việt Nam. Mang đến trải nghiệm mua sắm dễ dàng, tiện lợi và tiết kiệm cho mọi gia đình.</p>
                         <div class="footer-socials">
                             <a href="#" class="social-btn" aria-label="Facebook">📘</a>
                             <a href="#" class="social-btn" aria-label="Instagram">📸</a>
@@ -344,96 +129,29 @@
                             <a href="#" class="social-btn" aria-label="YouTube">▶️</a>
                         </div>
                     </div>
-
                     <div class="footer-col">
                         <h4>Liên kết nhanh</h4>
                         <ul>
-                            <li><a href="/">Trang chủ</a></li>
-                            <li><a href="#products-section">Sản phẩm</a></li>
-                            <li><a href="#promo-section">Khuyến mãi</a></li>
-                            <li><a href="#home-about">Về chúng tôi</a></li>
+                            <li><a href="#">Trang chủ</a></li>
+                            <li><a href="#">Sản phẩm mới</a></li>
+                            <li><a href="#">Về chúng tôi</a></li>
+                            <li><a href="#">Blog thời trang</a></li>
+                            <li><a href="#">Chính sách đổi trả</a></li>
                         </ul>
                     </div>
-
                     <div class="footer-col footer-contact">
                         <h4>Liên hệ</h4>
-                        <p><span class="icon">📍</span>Phân khu Đào tạo E1, Khu Công nghệ cao, Phường Tăng Nhơn Phú, Thành phố Thủ Đức, TP. Hồ Chí Minh</p>
-                        <p><span class="icon">📞</span>0909 090 909</p>
+                        <p><span class="icon">📍</span>123 Đường Lê Lợi, Q.1, TP.HCM</p>
+                        <p><span class="icon">📞</span>1800 1234 (Miễn phí)</p>
                         <p><span class="icon">✉️</span>support@hnts.vn</p>
-                        <p><span class="icon">🕐</span>8:00 – 22:00 mỗi ngày</p>
+                        <p><span class="icon">🕐</span>Thứ 2 – Chủ nhật: 8:00 – 22:00</p>
                     </div>
                 </div>
-
                 <div class="footer-bottom">
                     <p>© 2026 HNTS. Tất cả quyền được bảo lưu.</p>
                     <p>Được tạo với <span class="heart">❤️</span> tại Việt Nam</p>
                 </div>
             </div>
         </footer>
-
     </div>
 </section>
-
-<!-- ============================================================
-     CART DRAWER
-     ============================================================ -->
-<div id="cart-drawer-overlay" class="cart-drawer-overlay"></div>
-
-<div id="cart-drawer" class="cart-drawer" role="dialog" aria-modal="true" aria-label="Giỏ hàng">
-    <div class="cart-drawer-header">
-        <h3>🛒 Giỏ hàng của bạn</h3>
-        <button class="cart-drawer-close" id="cart-drawer-close" type="button" aria-label="Đóng">✕</button>
-    </div>
-
-    <div class="cart-drawer-body" id="cart-drawer-items">
-        <!-- Sản phẩm trong giỏ hàng sẽ được render bằng JS -->
-    </div>
-
-    <div class="cart-drawer-footer">
-        <div class="cart-total-wrap">
-            <span>Tổng tiền:</span>
-            <span class="cart-total-price" id="cart-total-price">0đ</span>
-        </div>
-
-        <button class="btn-checkout" id="btn-checkout" type="button">
-            Thanh toán ngay
-        </button>
-    </div>
-</div>
-
-<!-- ============================================================
-     REVIEW MODAL
-     ============================================================ -->
-<div id="review-modal-overlay" class="review-modal-overlay">
-    <div class="review-modal-box">
-
-        <button class="review-modal-close" type="button" onclick="closeReviewModal()">✕</button>
-
-        <h3>💬 Đánh giá sản phẩm</h3>
-        <p id="review-product-name" class="review-product-name"></p>
-
-        <div class="review-form-group">
-            <label for="review-rating">Số sao</label>
-            <select id="review-rating">
-                <option value="5">★★★★★ - Rất tốt</option>
-                <option value="4">★★★★☆ - Tốt</option>
-                <option value="3">★★★☆☆ - Bình thường</option>
-                <option value="2">★★☆☆☆ - Chưa tốt</option>
-                <option value="1">★☆☆☆☆ - Tệ</option>
-            </select>
-        </div>
-
-        <div class="review-form-group">
-            <label for="review-comment">Bình luận</label>
-            <textarea id="review-comment" rows="4" placeholder="Viết cảm nhận của bạn về sản phẩm..."></textarea>
-        </div>
-
-        <button class="review-submit-btn" type="button" onclick="submitReview()">
-            Gửi đánh giá
-        </button>
-
-        <div class="review-list-title">Các đánh giá trước đó</div>
-        <div id="review-list" class="review-list"></div>
-
-    </div>
-</div>
