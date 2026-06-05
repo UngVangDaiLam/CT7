@@ -162,6 +162,49 @@ namespace bt1.Controllers
             return Json(new { isLoggedIn = false });
         }
 
+        // POST: /Account/ChangePassword (AJAX) - đổi mật khẩu cho user đang đăng nhập
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(string oldPassword, string newPassword, string confirmPassword)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (!userId.HasValue)
+            {
+                return Json(new { success = false, message = "Vui lòng đăng nhập." });
+            }
+
+            if (string.IsNullOrWhiteSpace(oldPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập đầy đủ thông tin." });
+            }
+
+            if (newPassword.Length < 6)
+            {
+                return Json(new { success = false, message = "Mật khẩu mới phải từ 6 ký tự trở lên." });
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                return Json(new { success = false, message = "Xác nhận mật khẩu không khớp." });
+            }
+
+            var user = await _context.Users.FindAsync(userId.Value);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy tài khoản." });
+            }
+
+            if (!VerifyPassword(oldPassword, user.PasswordHash))
+            {
+                return Json(new { success = false, message = "Mật khẩu cũ không chính xác." });
+            }
+
+            user.PasswordHash = HashPassword(newPassword);
+            user.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đổi mật khẩu thành công!" });
+        }
+
         // Hàm mã hóa mật khẩu (sử dụng SHA256)
         private string HashPassword(string password)
         {

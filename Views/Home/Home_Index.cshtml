@@ -1,6 +1,14 @@
+@using Microsoft.AspNetCore.Http
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "HNTS - Trang chủ";
+
+    // Đọc session để hiện đúng nút Đăng nhập / Đăng xuất (dùng chung cho / và /User)
+    var sessionUserId = Context.Session.GetInt32("UserId");
+    var sessionName = Context.Session.GetString("FullName")
+                      ?? Context.Session.GetString("Username")
+                      ?? "Tài khoản";
+    var isLoggedIn = sessionUserId.HasValue;
 }
 
 <div id="login-page" style="display:none;"></div>
@@ -152,21 +160,26 @@
 
             <!-- Tiện ích phải -->
             <div class="header-actions">
-                <button class="header-icon-btn" type="button" title="Yêu thích">♡</button>
+                <a href="/Wishlist" class="header-icon-btn" title="Yêu thích">
+                    ♡
+                    <span class="cart-badge wishlist-badge" id="wishlist-count" style="display:none;">0</span>
+                </a>
 
                 <button class="header-icon-btn nav-cart-btn" type="button" title="Giỏ hàng">
                     🛒
                     <span class="cart-badge cart-count" id="cart-count" style="display:none;">0</span>
                 </button>
 
-                <div id="nav-login-wrap">
+                <div id="nav-login-wrap" style="@(isLoggedIn ? "display:none;" : "")">
                     <button class="header-account-btn" id="nav-login-btn" type="button">
                         👤 <span>Đăng nhập</span>
                     </button>
                 </div>
 
-                <div id="nav-logout-wrap" style="display:none;">
-                    <span id="nav-username" class="nav-username-text"></span>
+                <div id="nav-logout-wrap" style="@(isLoggedIn ? "" : "display:none;")">
+                    <span id="nav-username" class="nav-username-text">@(isLoggedIn ? ("👤 " + sessionName) : "")</span>
+                    <a href="/Order" class="header-mini-link" title="Đơn hàng của tôi">📦 Đơn hàng</a>
+                    <button class="header-mini-link" type="button" id="open-change-pw" title="Đổi mật khẩu">🔑 Đổi MK</button>
                     <button class="header-account-btn" id="user-logout-btn" type="button">Đăng xuất</button>
                 </div>
 
@@ -427,5 +440,37 @@
         <div class="review-list-title">Các đánh giá trước đó</div>
         <div id="review-list" class="review-list"></div>
 
+    </div>
+</div>
+<!-- ============================================================
+     MODAL ĐỔI MẬT KHẨU (chỉ dùng khi đã đăng nhập)
+     ============================================================ -->
+<div id="change-pw-overlay" class="changepw-overlay" style="display:none;">
+    <div class="changepw-box">
+        <div class="changepw-head">
+            <h3>🔑 Đổi mật khẩu</h3>
+            <button type="button" class="changepw-close" id="close-change-pw">✕</button>
+        </div>
+
+        <div class="changepw-body">
+            <div id="change-pw-msg" class="changepw-msg" style="display:none;"></div>
+
+            <div class="changepw-group">
+                <label for="cp-old">Mật khẩu hiện tại</label>
+                <input type="password" id="cp-old" placeholder="Nhập mật khẩu hiện tại" />
+            </div>
+
+            <div class="changepw-group">
+                <label for="cp-new">Mật khẩu mới</label>
+                <input type="password" id="cp-new" placeholder="Tối thiểu 6 ký tự" />
+            </div>
+
+            <div class="changepw-group">
+                <label for="cp-confirm">Xác nhận mật khẩu mới</label>
+                <input type="password" id="cp-confirm" placeholder="Nhập lại mật khẩu mới" />
+            </div>
+
+            <button type="button" class="changepw-submit" id="submit-change-pw">Cập nhật mật khẩu</button>
+        </div>
     </div>
 </div>

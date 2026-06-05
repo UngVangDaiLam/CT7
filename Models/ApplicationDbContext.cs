@@ -22,6 +22,7 @@ namespace bt1.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<WishlistItem> WishlistItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +83,11 @@ namespace bt1.Models
             modelBuilder.Entity<OrderDetail>()
                 .Property(od => od.Price)
                 .HasPrecision(18, 2);
+
+            // Wishlist: moi user chi luu 1 san pham 1 lan
+            modelBuilder.Entity<WishlistItem>()
+                .HasIndex(w => new { w.UserId, w.ProductId })
+                .IsUnique();
         }
     }
 }

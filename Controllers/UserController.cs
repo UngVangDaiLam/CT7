@@ -13,12 +13,27 @@ namespace bt1.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int? categoryId)
         {
-            var products = await _context.Products
+            var query = _context.Products
                 .Include(p => p.Images)
                 .Include(p => p.Category)
                 .Include(p => p.Reviews)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    p.Description.Contains(search));
+            }
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            var products = await query
                 .OrderByDescending(p => p.Id)
                 .ToListAsync();
 
@@ -28,8 +43,11 @@ namespace bt1.Controllers
 
             ViewBag.Products = products;
             ViewBag.Categories = categories;
+            ViewBag.Search = search;
+            ViewBag.CategoryId = categoryId;
 
-            return View("User_Index");
+            // Cho /User dùng chung giao diện Home
+            return View("~/Views/Home/Home_Index.cshtml");
         }
     }
 }

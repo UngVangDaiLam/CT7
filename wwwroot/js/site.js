@@ -411,10 +411,7 @@ const STORAGE_KEYS = {
     reviews: 'HNTS_reviews',
 };
 
-const ACCOUNTS = {
-    admin: { username: 'admin', password: '123456', role: 'admin' },
-    user: { username: 'user', password: '123456', role: 'user' },
-};
+
 
 // Sản phẩm mẫu mặc định – có thêm images[], inStock, stockQty, thumbnail
 const DEFAULT_PRODUCTS = [
@@ -501,6 +498,17 @@ function showPage(page) {
         loginPageEl.style.display = 'none';
     }
 
+    if (userPageEl) {
+        userPageEl.classList.remove('d-none');
+
+        initProducts().then(() => {
+            renderUserProducts(getProducts());
+            updateCartCount();
+            initNavbarScroll();
+            initHamburger();
+            updateNavbarAuthState();
+        });
+    }
 
     if (adminPageEl) {
         adminPageEl.classList.remove('d-none');
@@ -651,27 +659,31 @@ function handleLogin(event) {
         return;
     }
 
-    const account = Object.values(ACCOUNTS).find(
-        a => a.username === username && a.password === password
-    );
+    fetch('/Account/Login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                hideLoginModal();
 
-    if (!account) {
-        showLoginError('Tên đăng nhập hoặc mật khẩu không đúng.', errorEl);
-        return;
-    }
-
-    sessionStorage.setItem(STORAGE_KEYS.user, JSON.stringify({
-        username: account.username,
-        role: account.role
-    }));
-
-    hideLoginModal();
-
-    if (account.role === 'admin') {
-        window.location.href = '/admin';
-    } else {
-        window.location.href = '/user';
-    }
+                if (data.role === 'Admin') {
+                    window.location.href = '/Admin';
+                } else {
+                    window.location.href = '/User';
+                }
+            } else {
+                showLoginError(data.message || 'Đăng nhập thất bại.', errorEl);
+            }
+        })
+        .catch(err => {
+            console.error('Login error:', err);
+            showLoginError('Lỗi kết nối. Vui lòng thử lại.', errorEl);
+        });
 }
 
 function showLoginError(msg, el) {
@@ -714,9 +726,24 @@ function handleLogout() {
 
 /** Lấy thông tin user đang đăng nhập */
 function getCurrentUser() {
+    // 1) Thử hệ thống cũ (sessionStorage)
     try {
-        return JSON.parse(sessionStorage.getItem(STORAGE_KEYS.user));
-    } catch { return null; }
+        var u = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.user));
+        if (u) return u;
+    } catch { }
+
+    // 2) Fallback: đăng nhập qua server (checkAuthStatus lưu vào localStorage)
+    var sid = localStorage.getItem('userId');
+    if (sid) {
+        return {
+            id: parseInt(sid),
+            userId: parseInt(sid),
+            username: localStorage.getItem('username') || '',
+            fullName: localStorage.getItem('fullName') || '',
+            role: localStorage.getItem('role') || 'User'
+        };
+    }
+    return null;
 }
 
 /**
@@ -1801,3 +1828,114 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+/* ============================================================
+   ĐỔI MẬT KHẨU + WISHLIST (bổ sung)
+   ============================================================ */
+(function () {
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // ----- Modal đổi mật khẩu -----
+        var openBtn = document.getElementById('open-change-pw');
+        var overlay = document.getElementById('change-pw-overlay');
+        var closeBtn = document.getElementById('close-change-pw');
+        var submitBtn = document.getElementById('submit-change-pw');
+        var msg = document.getElementById('change-pw-msg');
+
+        function showMsg(text, ok) {
+            if (!msg) return;
+            msg.style.display = 'block';
+            msg.textContent = text;
+            msg.style.color = ok ? '#0f766e' : '#dc2626';
+            msg.style.background = ok ? '#ecfdf5' : '#fef2f2';
+        }
+
+        if (openBtn && overlay) {
+            openBtn.addEventListener('click', function () {
+                overlay.style.display = 'flex';
+                if (msg) msg.style.display = 'none';
+            });
+        }
+        if (closeBtn && overlay) {
+            closeBtn.addEventListener('click', function () { overlay.style.display = 'none'; });
+        }
+        if (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) overlay.style.display = 'none';
+            });
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                var oldPw = document.getElementById('cp-old').value;
+                var newPw = document.getElementById('cp-new').value;
+                var confirmPw = document.getElementById('cp-confirm').value;
+
+                if (!oldPw || !newPw) { showMsg('Vui lòng nhập đầy đủ thông tin.', false); return; }
+                if (newPw.length < 6) { showMsg('Mật khẩu mới phải từ 6 ký tự.', false); return; }
+                if (newPw !== confirmPw) { showMsg('Xác nhận mật khẩu không khớp.', false); return; }
+
+                fetch('/Account/ChangePassword', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'oldPassword=' + encodeURIComponent(oldPw) +
+                        '&newPassword=' + encodeURIComponent(newPw) +
+                        '&confirmPassword=' + encodeURIComponent(confirmPw)
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        showMsg(data.message, data.success);
+                        if (data.success) {
+                            document.getElementById('cp-old').value = '';
+                            document.getElementById('cp-new').value = '';
+                            document.getElementById('cp-confirm').value = '';
+                            setTimeout(function () { if (overlay) overlay.style.display = 'none'; }, 1200);
+                        }
+                    })
+                    .catch(function () { showMsg('Lỗi kết nối, vui lòng thử lại.', false); });
+            });
+        }
+
+        // ----- Badge wishlist -----
+        refreshWishlistCount();
+    });
+})();
+
+// Cập nhật số lượng yêu thích trên header (badge)
+function refreshWishlistCount() {
+    var badge = document.getElementById('wishlist-count');
+    if (!badge) return;
+    fetch('/Wishlist/Count')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var n = data.count || 0;
+            if (n > 0) {
+                badge.textContent = n;
+                badge.style.display = 'grid';
+            } else {
+                badge.style.display = 'none';
+            }
+        })
+        .catch(function () { });
+}
+
+// Thêm/bỏ yêu thích (gọi từ nút trái tim ở sản phẩm nếu có)
+function toggleWishlist(productId, btn) {
+    fetch('/Wishlist/Toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'productId=' + productId
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.requireLogin) {
+                alert('Vui lòng đăng nhập để dùng yêu thích.');
+                return;
+            }
+            if (data.success && btn) {
+                btn.classList.toggle('active', data.added);
+                btn.textContent = data.added ? '❤️' : '♡';
+            }
+            refreshWishlistCount();
+        })
+        .catch(function () { alert('Lỗi kết nối.'); });
+}

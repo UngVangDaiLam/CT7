@@ -3884,3 +3884,309 @@ input, textarea, select {
     font-size: 0.92rem;
     white-space: nowrap;
 }
+
+/* ============================================================
+   ADMIN - GALLERY QUẢN LÝ ẢNH SẢN PHẨM (xóa từng ảnh)
+   ============================================================ */
+.admin-img-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.admin-img-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+    .admin-img-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+.admin-img-del {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.92);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.78rem;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    transition: 0.15s ease;
+}
+
+    .admin-img-del:hover {
+        background: #dc2626;
+        transform: scale(1.08);
+    }
+
+.admin-img-main {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background: rgba(15, 118, 110, 0.88);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 2px 0;
+}
+
+/* ============================================================
+   USER: link nhỏ trong cụm đăng nhập + modal đổi mật khẩu + wishlist
+   ============================================================ */
+
+/* Link nhỏ (Đơn hàng / Đổi MK) trong cụm logout */
+.header-mini-link {
+    background: #f1f5f9;
+    border: none;
+    color: #0f766e;
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: 0.18s ease;
+}
+
+    .header-mini-link:hover {
+        background: #ccfbf1;
+        color: #0f766e;
+    }
+
+/* Badge wishlist (trái tim) - màu hồng/đỏ */
+.wishlist-badge {
+    background: #ef4444 !important;
+}
+
+/* ---------- Modal đổi mật khẩu ---------- */
+.changepw-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 4000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.changepw-box {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+}
+
+.changepw-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: #fff;
+}
+
+    .changepw-head h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+    }
+
+.changepw-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.changepw-body {
+    padding: 22px;
+}
+
+.changepw-group {
+    margin-bottom: 16px;
+}
+
+    .changepw-group label {
+        display: block;
+        font-weight: 700;
+        font-size: 0.88rem;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+
+    .changepw-group input {
+        width: 100%;
+        height: 44px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0 14px;
+        font-size: 0.95rem;
+        outline: none;
+        transition: 0.18s ease;
+    }
+
+        .changepw-group input:focus {
+            border-color: #2dd4bf;
+            box-shadow: 0 0 0 4px rgba(45,212,191,0.13);
+        }
+
+.changepw-submit {
+    width: 100%;
+    height: 46px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+    .changepw-submit:hover {
+        transform: translateY(-1px);
+    }
+
+.changepw-msg {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+/* ---------- Trang Wishlist ---------- */
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 22px;
+    margin-top: 28px;
+}
+
+.wishlist-card {
+    background: #fff;
+    border: 1px solid #eef0f3;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: 0.18s ease;
+}
+
+    .wishlist-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 32px rgba(0,0,0,0.08);
+    }
+
+.wishlist-thumb {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: #f8fafc;
+}
+
+    .wishlist-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.wishlist-badge-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: linear-gradient(135deg, #fb923c, #f43f5e);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.wishlist-info {
+    padding: 14px 16px 16px;
+}
+
+.wishlist-cat {
+    font-size: 0.74rem;
+    color: #14b8a6;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.wishlist-name {
+    font-weight: 700;
+    color: #0f172a;
+    margin: 4px 0 8px;
+    font-size: 0.98rem;
+    line-height: 1.35;
+    min-height: 2.6em;
+}
+
+.wishlist-price {
+    color: #f43f5e;
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+}
+
+.wishlist-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.wl-add-cart {
+    flex: 1;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+    .wl-add-cart:hover {
+        transform: translateY(-1px);
+    }
+
+.wl-remove {
+    border: 1px solid #fecaca;
+    background: #fff5f5;
+    color: #ef4444;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+    .wl-remove:hover {
+        background: #fee2e2;
+    }

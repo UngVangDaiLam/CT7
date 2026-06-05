@@ -3,6 +3,7 @@
     ViewData["Title"] = "Admin - Quản lý sản phẩm";
 
     var products = ViewBag.Products as List<bt1.Product.Product> ?? new List<bt1.Product.Product>();
+    var categories = ViewBag.Categories as List<bt1.Category.Category> ?? new List<bt1.Category.Category>();
     var editProduct = ViewBag.EditProduct as bt1.Product.Product;
     var isEditing = editProduct != null;
 
@@ -154,7 +155,7 @@
                                    id="Name"
                                    name="Name"
                                    value="@(isEditing ? editProduct!.Name : "")"
-                                   placeholder="Ví dụ: Áo Thun Cotton Cao Cấp"
+                                   placeholder="Ví dụ: Gundam RX-78-2 Ver.Ka MG 1/100"
                                    required />
                         </div>
 
@@ -172,6 +173,26 @@
                                    required />
                         </div>
 
+                        <div class="admin-form-group">
+                            <label for="categoryId">
+                                Thể loại mô hình <span style="color:var(--accent)">*</span>
+                            </label>
+                            <select id="categoryId" name="categoryId" required>
+                                <option value="">— Chọn thể loại —</option>
+                                @foreach (var cat in categories)
+                                {
+                                    if (isEditing && editProduct!.CategoryId == cat.Id)
+                                    {
+                                        <option value="@cat.Id" selected>@cat.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
                         <div class="admin-form-group form-full">
                             <label for="Description">
                                 Mô tả chi tiết <span style="color:var(--accent)">*</span>
@@ -183,11 +204,40 @@
                                       required>@(isEditing ? editProduct!.Description : "")</textarea>
                         </div>
 
-                        @if (isEditing && !string.IsNullOrEmpty(editProduct!.ImageUrl))
+                        @if (isEditing && editProduct!.Images != null && editProduct.Images.Any())
+                        {
+                            <div class="admin-form-group form-full">
+                                <label>
+                                    Ảnh đã thêm
+                                    <span style="font-weight:400;color:var(--text-light);font-size:0.82rem;">
+                                        Bấm ✕ để xóa từng ảnh
+                                    </span>
+                                </label>
+
+                                <div class="admin-img-gallery">
+                                    @foreach (var img in editProduct.Images)
+                                    {
+                                        <div class="admin-img-item" data-img-id="@img.Id">
+                                            <img src="@img.Url" alt="Ảnh sản phẩm" />
+                                            <button type="button"
+                                                    class="admin-img-del"
+                                                    title="Xóa ảnh này"
+                                                    onclick="deleteProductImage(@img.Id, @editProduct.Id, this)">
+                                                ✕
+                                            </button>
+                                            @if (editProduct.ImageUrl == img.Url)
+                                            {
+                                                <span class="admin-img-main">Ảnh chính</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else if (isEditing && !string.IsNullOrEmpty(editProduct!.ImageUrl))
                         {
                             <div class="admin-form-group form-full">
                                 <label>Ảnh hiện tại</label>
-
                                 <div style="margin-top:8px;">
                                     <img src="@editProduct.ImageUrl"
                                          alt="@editProduct.Name"
@@ -445,3 +495,26 @@
         </main>
     </div>
 </section>
+
+<script>
+    // Xóa từng ảnh sản phẩm (gọi API /Admin/DeleteImage đã có sẵn)
+    function deleteProductImage(imageId, productId, btn) {
+        if (!confirm('Xóa ảnh này khỏi sản phẩm?')) return;
+
+        fetch('/Admin/DeleteImage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'imageId=' + imageId + '&productId=' + productId
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) {
+                var item = btn.closest('.admin-img-item');
+                if (item) item.remove();
+            } else {
+                alert(data.message || 'Không xóa được ảnh.');
+            }
+        })
+        .catch(function () { alert('Lỗi kết nối, vui lòng thử lại.'); });
+    }
+</script>

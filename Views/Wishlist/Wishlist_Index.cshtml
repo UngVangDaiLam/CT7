@@ -1,0 +1,96 @@
+﻿@using ProductModel = bt1.Product.Product
+@model List<ProductModel>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "HNTS - Yêu thích";
+}
+
+<div class="container" style="padding: 40px 0; min-height: 60vh;">
+    <a href="/" style="color:#0f766e;text-decoration:none;font-weight:700;display:inline-block;margin-bottom:18px;">← Về trang chủ</a>
+
+    <h1 style="font-size:1.7rem;font-weight:800;color:#0f172a;">❤️ Sản phẩm yêu thích</h1>
+    <p style="color:#64748b;margin-top:4px;">Những mô hình bạn đã lưu lại.</p>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div style="text-align:center;padding:70px 20px;background:#f8fafc;border-radius:14px;margin-top:30px;">
+            <div style="font-size:3rem;">🤍</div>
+            <h3 style="margin:14px 0 6px;">Chưa có sản phẩm yêu thích</h3>
+            <p style="color:#64748b;margin-bottom:20px;">Bấm vào biểu tượng trái tim ở sản phẩm để lưu lại nhé.</p>
+            <a href="/" style="background:linear-gradient(135deg,#14b8a6,#0f766e);color:#fff;padding:12px 26px;border-radius:10px;text-decoration:none;font-weight:700;">Khám phá sản phẩm</a>
+        </div>
+    }
+    else
+    {
+        <div class="wishlist-grid">
+            @foreach (var p in Model)
+            {
+                var img = !string.IsNullOrEmpty(p.ImageUrl)
+                    ? p.ImageUrl
+                    : $"https://picsum.photos/seed/{p.Id}/400/300";
+
+                <div class="wishlist-card" id="wish-card-@p.Id">
+                    <div class="wishlist-thumb">
+                        <img src="@img" alt="@p.Name"
+                             onerror="this.src='https://picsum.photos/seed/@p.Id/400/300'" />
+                        @if (!string.IsNullOrEmpty(p.Badge))
+                        {
+                            <span class="wishlist-badge-tag">@p.Badge</span>
+                        }
+                    </div>
+
+                    <div class="wishlist-info">
+                        <div class="wishlist-cat">@(p.Category?.Name ?? "Mô hình")</div>
+                        <div class="wishlist-name">@p.Name</div>
+                        <div class="wishlist-price">@p.Price.ToString("#,##0") đ</div>
+
+                        <div class="wishlist-actions">
+                            <button type="button" class="wl-add-cart" onclick="addToCart(@p.Id)">🛒 Thêm vào giỏ</button>
+                            <button type="button" class="wl-remove" onclick="removeFromWishlist(@p.Id)" title="Bỏ yêu thích">🗑</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    // Bỏ sản phẩm khỏi danh sách yêu thích
+    function removeFromWishlist(productId) {
+        fetch('/Wishlist/Remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'productId=' + productId
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) {
+                var card = document.getElementById('wish-card-' + productId);
+                if (card) card.remove();
+                if (typeof refreshWishlistCount === 'function') refreshWishlistCount();
+                // Nếu hết sản phẩm thì tải lại để hiện trạng thái trống
+                if (document.querySelectorAll('.wishlist-card').length === 0) {
+                    location.reload();
+                }
+            } else {
+                alert(data.message || 'Không xóa được.');
+            }
+        })
+        .catch(function () { alert('Lỗi kết nối, vui lòng thử lại.'); });
+    }
+
+    // Dự phòng nếu site.js chưa có addToCart
+    if (typeof addToCart !== 'function') {
+        window.addToCart = function (productId) {
+            fetch('/Cart/AddToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'productId=' + productId + '&quantity=1'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) { alert(data.message || 'Đã thêm vào giỏ.'); })
+            .catch(function () { alert('Lỗi kết nối.'); });
+        };
+    }
+</script>
