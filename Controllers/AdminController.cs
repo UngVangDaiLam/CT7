@@ -17,7 +17,7 @@ namespace bt1.Controllers
         }
 
         // ====================================================
-        // QUẢN LÝ SẢN PHẨM (giữ nguyên)
+        // QUẢN LÝ SẢN PHẨM
         // ====================================================
 
         public async Task<IActionResult> Index(int? editId)
@@ -165,7 +165,8 @@ namespace bt1.Controllers
             int stockQty,
             string? badge,
             int rating,
-            List<IFormFile>? imageFiles)
+            List<IFormFile>? imageFiles,
+            List<int>? keepImageIds)
         {
             var product = await _context.Products
                 .Include(p => p.Images)
@@ -219,6 +220,25 @@ namespace bt1.Controllers
             product.Rating = rating > 0 ? rating : 5;
             product.CategoryId = category.Id;
 
+            // Ảnh cũ nào còn trong keepImageIds thì giữ lại.
+            // Ảnh cũ nào đã bấm dấu X trên giao diện thì không gửi keepImageIds nữa,
+            // nên sẽ bị xóa khỏi database và xóa file vật lý.
+            keepImageIds ??= new List<int>();
+
+            if (product.Images != null && product.Images.Any())
+            {
+                var imagesToRemove = product.Images
+                    .Where(img => !keepImageIds.Contains(img.Id))
+                    .ToList();
+
+                foreach (var image in imagesToRemove)
+                {
+                    DeletePhysicalImage(image.Url);
+                    _context.ProductImages.Remove(image);
+                }
+            }
+
+            // Thêm ảnh mới còn lại trong input imageFiles
             if (imageFiles != null && imageFiles.Count > 0)
             {
                 if (product.Images == null)
@@ -241,14 +261,22 @@ namespace bt1.Controllers
                         ProductId = product.Id
                     });
                 }
-
-                if (product.Images.Any())
-                {
-                    product.ImageUrl = product.Images.First().Url;
-                }
             }
 
             await _context.SaveChangesAsync();
+
+            var updatedProduct = await _context.Products
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (updatedProduct != null)
+            {
+                updatedProduct.ImageUrl = updatedProduct.Images != null && updatedProduct.Images.Any()
+                    ? updatedProduct.Images.First().Url
+                    : "";
+
+                await _context.SaveChangesAsync();
+            }
 
             TempData["Success"] = "Cập nhật sản phẩm thành công.";
 
@@ -327,7 +355,7 @@ namespace bt1.Controllers
         }
 
         // ====================================================
-        // DASHBOARD - THỐNG KÊ (mới)
+        // DASHBOARD - THỐNG KÊ
         // ====================================================
 
         public async Task<IActionResult> Dashboard()
@@ -359,7 +387,7 @@ namespace bt1.Controllers
         }
 
         // ====================================================
-        // QUẢN LÝ ĐƠN HÀNG (mới)
+        // QUẢN LÝ ĐƠN HÀNG
         // ====================================================
 
         public async Task<IActionResult> Orders(string status = "")
@@ -400,7 +428,7 @@ namespace bt1.Controllers
         }
 
         // ====================================================
-        // QUẢN LÝ USER (mới)
+        // QUẢN LÝ USER
         // ====================================================
 
         public async Task<IActionResult> Users()
@@ -429,7 +457,7 @@ namespace bt1.Controllers
         }
 
         // ====================================================
-        // XEM REVIEW (mới - chỉ xem)
+        // XEM REVIEW
         // ====================================================
 
         public async Task<IActionResult> Reviews()
@@ -523,7 +551,9 @@ namespace bt1.Controllers
                 return;
             }
 
-            var relativePath = imageUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString());
+            var relativePath = imageUrl
+                .TrimStart('/')
+                .Replace("/", Path.DirectorySeparatorChar.ToString());
 
             var fullPath = Path.Combine(
                 Directory.GetCurrentDirectory(),
@@ -533,7 +563,14 @@ namespace bt1.Controllers
 
             if (System.IO.File.Exists(fullPath))
             {
-                System.IO.File.Delete(fullPath);
+                try
+                {
+                    System.IO.File.Delete(fullPath);
+                }
+                catch
+                {
+                    // Không chặn cập nhật/xóa sản phẩm nếu xóa file vật lý bị lỗi
+                }
             }
         }
     }

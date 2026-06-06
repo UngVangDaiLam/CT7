@@ -2,68 +2,516 @@
 
 @{
     ViewData["Title"] = "Lịch Sử Đơn Hàng";
+
+    var totalOrders = Model?.Count ?? 0;
+    var totalSpent = Model?.Sum(o => o.TotalAmount) ?? 0;
+    var pendingOrders = Model?.Count(o => o.Status == "Pending") ?? 0;
+    var cancelledOrders = Model?.Count(o => o.Status == "Cancelled") ?? 0;
+
+    string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "Pending" => "Chờ xác nhận",
+            "Processing" => "Đang xử lý",
+            "Shipping" => "Đang giao",
+            "Completed" => "Hoàn thành",
+            "Cancelled" => "Đã hủy",
+            _ => status
+        };
+    }
+
+    string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "status-pending",
+            "Processing" => "status-processing",
+            "Shipping" => "status-shipping",
+            "Completed" => "status-completed",
+            "Cancelled" => "status-cancelled",
+            _ => "status-default"
+        };
+    }
 }
 
-<div class="container" style="padding: 40px 0;">
-    <h1>📦 Lịch Sử Đơn Hàng</h1>
-
-    @if (Model.Count == 0)
-    {
-        <div style="text-align: center; padding: 60px 20px; background: #f8fafc; border-radius: 12px; margin: 40px 0;">
-            <div style="font-size: 3rem; margin-bottom: 20px;">📋</div>
-            <h3>Chưa có đơn hàng nào</h3>
-            <p style="color: #64748b; margin: 20px 0;">Bạn chưa đặt hàng nào. Hãy bắt đầu mua sắm!</p>
-            <a href="/" class="btn btn-primary" style="padding: 12px 28px; background: #f43f5e; color: #fff; border-radius: 8px; text-decoration: none; display: inline-block;">Mua sắm ngay</a>
-        </div>
+<style>
+    .order-history-page {
+        background: #f8fafc;
+        min-height: 100vh;
+        padding: 42px 0 70px;
     }
-    else
-    {
-        <table style="width: 100%; margin: 40px 0; border-collapse: collapse;">
-            <thead>
-                <tr style="border-bottom: 2px solid #e2e8f0;">
-                    <th style="text-align: left; padding: 15px; font-weight: 600;">Mã Đơn</th>
-                    <th style="text-align: left; padding: 15px; font-weight: 600;">Ngày Đặt</th>
-                    <th style="text-align: right; padding: 15px; font-weight: 600;">Tổng Tiền</th>
-                    <th style="text-align: center; padding: 15px; font-weight: 600;">Trạng Thái</th>
-                    <th style="text-align: center; padding: 15px; font-weight: 600;">Thao Tác</th>
-                </tr>
-            </thead>
-            <tbody>
+
+    .order-history-header {
+        background: linear-gradient(135deg, #0f766e, #14b8a6);
+        color: #fff;
+        border-radius: 26px;
+        padding: 34px;
+        margin-bottom: 26px;
+        box-shadow: 0 18px 42px rgba(20, 184, 166, 0.22);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .order-history-header::after {
+            content: "";
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.13);
+            right: -70px;
+            top: -90px;
+        }
+
+        .order-history-header h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 1000;
+            letter-spacing: -1px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .order-history-header p {
+            margin: 10px 0 0;
+            color: rgba(255,255,255,0.85);
+            font-size: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+    .order-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .order-stat-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+    }
+
+        .order-stat-card span {
+            display: block;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.84rem;
+            margin-bottom: 8px;
+        }
+
+        .order-stat-card strong {
+            display: block;
+            color: #0f172a;
+            font-size: 1.45rem;
+            font-weight: 1000;
+        }
+
+    .order-list {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .order-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+        transition: 0.22s ease;
+    }
+
+        .order-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.11);
+        }
+
+    .order-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px;
+        border-bottom: 1px solid #eef2f7;
+        background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+
+    .order-code {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .order-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: #ecfdf5;
+        color: #0f766e;
+        font-size: 1.4rem;
+    }
+
+    .order-code h3 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1.12rem;
+        font-weight: 1000;
+    }
+
+    .order-code p {
+        margin: 2px 0 0;
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .order-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .status-pending {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .status-processing {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+
+    .status-shipping {
+        background: #f0f9ff;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+    }
+
+    .status-completed {
+        background: #ecfdf5;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+    }
+
+    .status-cancelled {
+        background: #fff1f2;
+        color: #be123c;
+        border: 1px solid #fecdd3;
+    }
+
+    .status-default {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    .order-card-body {
+        padding: 22px;
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr auto;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .order-info-item span {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 6px;
+    }
+
+    .order-info-item strong {
+        display: block;
+        color: #1e293b;
+        font-size: 0.98rem;
+        font-weight: 800;
+    }
+
+    .order-price strong {
+        color: #e11d48;
+        font-size: 1.25rem;
+        font-weight: 1000;
+    }
+
+    .order-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-order-detail {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 16px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #14b8a6, #0f766e);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 900;
+        box-shadow: 0 10px 24px rgba(20, 184, 166, 0.18);
+        transition: 0.2s ease;
+    }
+
+        .btn-order-detail:hover {
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(20, 184, 166, 0.28);
+        }
+
+    .btn-order-cancel {
+        min-height: 42px;
+        padding: 0 16px;
+        border: none;
+        border-radius: 12px;
+        background: #fff1f2;
+        color: #e11d48;
+        font-weight: 900;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+        .btn-order-cancel:hover {
+            background: #ffe4e6;
+            transform: translateY(-2px);
+        }
+
+    .empty-order-box {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 26px;
+        padding: 70px 24px;
+        text-align: center;
+        box-shadow: 0 12px 34px rgba(15, 23, 42, 0.06);
+    }
+
+    .empty-order-icon {
+        width: 90px;
+        height: 90px;
+        border-radius: 28px;
+        display: grid;
+        place-items: center;
+        background: #ecfdf5;
+        color: #0f766e;
+        font-size: 3rem;
+        margin: 0 auto 20px;
+    }
+
+    .empty-order-box h2 {
+        margin: 0 0 10px;
+        color: #0f172a;
+        font-weight: 1000;
+    }
+
+    .empty-order-box p {
+        color: #64748b;
+        margin-bottom: 24px;
+    }
+
+    .btn-shop-now-order {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0 22px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #14b8a6, #0f766e);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 900;
+    }
+
+        .btn-shop-now-order:hover {
+            color: #fff;
+        }
+
+    @@media (max-width: 992px) {
+        .order-stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .order-card-body {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .order-actions {
+            justify-content: flex-start;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .order-history-page {
+            padding: 24px 0 50px;
+        }
+
+        .order-history-header {
+            padding: 26px 22px;
+            border-radius: 20px;
+        }
+
+        .order-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .order-card-top {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .order-card-body {
+            grid-template-columns: 1fr;
+        }
+
+        .order-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-order-detail,
+        .btn-order-cancel {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="order-history-page">
+    <div class="container">
+        <div class="order-history-header">
+            <h1>📦 Lịch Sử Đơn Hàng</h1>
+            <p>Theo dõi các đơn hàng bạn đã đặt, xem chi tiết và hủy đơn khi còn đang chờ xác nhận.</p>
+        </div>
+
+        @if (Model == null || Model.Count == 0)
+        {
+            <div class="empty-order-box">
+                <div class="empty-order-icon">📋</div>
+                <h2>Chưa có đơn hàng nào</h2>
+                <p>Bạn chưa đặt đơn hàng nào. Hãy khám phá sản phẩm và tạo đơn hàng đầu tiên nhé.</p>
+                <a href="/" class="btn-shop-now-order">Mua sắm ngay</a>
+            </div>
+        }
+        else
+        {
+            <div class="order-stats-grid">
+                <div class="order-stat-card">
+                    <span>Tổng đơn hàng</span>
+                    <strong>@totalOrders</strong>
+                </div>
+
+                <div class="order-stat-card">
+                    <span>Tổng chi tiêu</span>
+                    <strong>@totalSpent.ToString("N0")đ</strong>
+                </div>
+
+                <div class="order-stat-card">
+                    <span>Đang chờ</span>
+                    <strong>@pendingOrders</strong>
+                </div>
+
+                <div class="order-stat-card">
+                    <span>Đã hủy</span>
+                    <strong>@cancelledOrders</strong>
+                </div>
+            </div>
+
+            <div class="order-list">
                 @foreach (var order in Model)
                 {
-                    <tr style="border-bottom: 1px solid #e2e8f0;">
-                        <td style="padding: 15px; font-weight: 600;">#@order.Id</td>
-                        <td style="padding: 15px;">@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td style="text-align: right; padding: 15px; font-weight: 600; color: #f43f5e;">@order.TotalAmount.ToString("N0")đ</td>
-                        <td style="text-align: center; padding: 15px;">
-                            <span style="background: #f59e0b; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-block;">@order.Status</span>
-                        </td>
-                        <td style="text-align: center; padding: 15px;">
-                            <a href="/Order/Details/@order.Id" style="color: #3b82f6; text-decoration: none; font-weight: 600;">Chi tiết</a>
-                            @if (order.Status == "Pending")
-                            {
-                                <button onclick="cancelOrder(@order.Id)" style="background: #fff0f3; color: #f43f5e; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Hủy</button>
-                            }
-                        </td>
-                    </tr>
+                    <div class="order-card">
+                        <div class="order-card-top">
+                            <div class="order-code">
+                                <div class="order-icon">🧾</div>
+                                <div>
+                                    <h3>Đơn hàng #@order.Id</h3>
+                                    <p>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                </div>
+                            </div>
+
+                            <span class="order-status @GetStatusClass(order.Status)">
+                                @GetStatusText(order.Status)
+                            </span>
+                        </div>
+
+                        <div class="order-card-body">
+                            <div class="order-info-item">
+                                <span>Số sản phẩm</span>
+                                <strong>@(order.OrderDetails?.Sum(d => d.Quantity) ?? 0) sản phẩm</strong>
+                            </div>
+
+                            <div class="order-info-item">
+                                <span>Ngày đặt</span>
+                                <strong>@order.OrderDate.ToString("dd/MM/yyyy")</strong>
+                            </div>
+
+                            <div class="order-info-item order-price">
+                                <span>Tổng tiền</span>
+                                <strong>@order.TotalAmount.ToString("N0")đ</strong>
+                            </div>
+
+                            <div class="order-actions">
+                                <a href="/Order/Details/@order.Id" class="btn-order-detail">
+                                    Xem chi tiết
+                                </a>
+
+                                @if (order.Status == "Pending")
+                                {
+                                    <button type="button" onclick="cancelOrder(@order.Id)" class="btn-order-cancel">
+                                        Hủy đơn
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 }
-            </tbody>
-        </table>
-    }
+            </div>
+        }
+    </div>
 </div>
 
 <script>
     function cancelOrder(orderId) {
-        if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+        if (!confirm('Bạn có chắc muốn hủy đơn hàng #' + orderId + ' không?')) {
+            return;
+        }
+
         fetch('/Order/CancelOrder', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
             body: 'id=' + orderId
         })
-        .then(r => r.json())
+        .then(response => response.json())
         .then(data => {
             alert(data.message);
-            if (data.success) location.reload();
+
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            alert('Có lỗi xảy ra khi hủy đơn hàng.');
         });
     }
 </script>

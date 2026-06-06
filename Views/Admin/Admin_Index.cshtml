@@ -15,6 +15,7 @@
     var maxPrice = products.Any() ? products.Max(p => p.Price) : 0;
     var totalValue = products.Sum(p => p.Price);
     var outOfStock = products.Count(p => p.Status == "OutOfStock");
+    var productFormAction = Url.Action(isEditing ? "EditProduct" : "AddProduct", "Admin");
 }
 
 <section id="admin-page" class="page-section">
@@ -138,7 +139,7 @@
                 <div class="admin-card-body">
 
                     <form class="product-form"
-                          action="@Url.Action(isEditing ? "EditProduct" : "AddProduct", "Admin")"
+                          action="@productFormAction"
                           method="post"
                           enctype="multipart/form-data">
 
@@ -204,65 +205,96 @@
                                       required>@(isEditing ? editProduct!.Description : "")</textarea>
                         </div>
 
-                        @if (isEditing && editProduct!.Images != null && editProduct.Images.Any())
-                        {
-                            <div class="admin-form-group form-full">
-                                <label>
-                                    Ảnh đã thêm
-                                    <span style="font-weight:400;color:var(--text-light);font-size:0.82rem;">
-                                        Bấm ✕ để xóa từng ảnh
-                                    </span>
-                                </label>
-
-                                <div class="admin-img-gallery">
-                                    @foreach (var img in editProduct.Images)
-                                    {
-                                        <div class="admin-img-item" data-img-id="@img.Id">
-                                            <img src="@img.Url" alt="Ảnh sản phẩm" />
-                                            <button type="button"
-                                                    class="admin-img-del"
-                                                    title="Xóa ảnh này"
-                                                    onclick="deleteProductImage(@img.Id, @editProduct.Id, this)">
-                                                ✕
-                                            </button>
-                                            @if (editProduct.ImageUrl == img.Url)
-                                            {
-                                                <span class="admin-img-main">Ảnh chính</span>
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                        else if (isEditing && !string.IsNullOrEmpty(editProduct!.ImageUrl))
-                        {
-                            <div class="admin-form-group form-full">
-                                <label>Ảnh hiện tại</label>
-                                <div style="margin-top:8px;">
-                                    <img src="@editProduct.ImageUrl"
-                                         alt="@editProduct.Name"
-                                         style="width:120px;height:90px;object-fit:cover;border-radius:10px;" />
-                                </div>
-                            </div>
-                        }
-
                         <div class="admin-form-group form-full">
-                            <label for="imageFiles">
+                            <label>
                                 Ảnh sản phẩm
                                 <span style="font-weight:400;color:var(--text-light);font-size:0.82rem;">
-                                    @(isEditing ? "Nếu không chọn ảnh mới, ảnh cũ sẽ được giữ nguyên" : "Chọn 1 hoặc nhiều ảnh")
+                                    Có thể chọn nhiều ảnh một lần hoặc chọn nhiều lần khác nhau
                                 </span>
                             </label>
 
-                            <div class="multi-img-upload-wrap">
+                            @if (isEditing && editProduct!.Images != null && editProduct.Images.Any())
+                            {
+                                <div class="admin-existing-images-block">
+                                    <div class="admin-image-title">Ảnh hiện tại</div>
+
+                                    <div class="admin-img-preview-wrap" id="existing-images-wrap">
+                                        @foreach (var img in editProduct.Images)
+                                        {
+                                            <div class="admin-img-preview-item existing-image-item"
+                                                 id="existing-img-@img.Id"
+                                                 data-image-id="@img.Id">
+
+                                                <button type="button"
+                                                        class="admin-img-remove-btn"
+                                                        onclick="removeExistingImage(@img.Id)"
+                                                        title="Xóa ảnh này">
+                                                    ×
+                                                </button>
+
+                                                <img src="@img.Url"
+                                                     alt="@editProduct.Name"
+                                                     onerror="this.src='https://picsum.photos/seed/@img.Id/160/120'" />
+
+                                                <div class="admin-img-name">Ảnh đã lưu</div>
+
+                                                <input type="hidden"
+                                                       name="keepImageIds"
+                                                       value="@img.Id"
+                                                       id="keep-img-@img.Id" />
+
+                                                @if (editProduct.ImageUrl == img.Url)
+                                                {
+                                                    <span class="admin-preview-main-badge">Ảnh chính</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else if (isEditing && !string.IsNullOrEmpty(editProduct!.ImageUrl))
+                            {
+                                <div class="admin-existing-images-block">
+                                    <div class="admin-image-title">Ảnh hiện tại</div>
+
+                                    <div class="admin-img-preview-wrap">
+                                        <div class="admin-img-preview-item">
+                                            <img src="@editProduct.ImageUrl"
+                                                 alt="@editProduct.Name"
+                                                 onerror="this.src='https://picsum.photos/seed/@editProduct.Id/160/120'" />
+
+                                            <div class="admin-img-name">Ảnh chính</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="admin-new-images-block">
+                                <div class="admin-image-title">Ảnh mới chọn</div>
+
                                 <input type="file"
                                        id="imageFiles"
                                        name="imageFiles"
-                                       accept="image/*"
-                                       multiple />
-                                <span class="multi-img-hint">📎 Chọn ảnh sản phẩm</span>
+                                       accept="image/png,image/jpeg,image/jpg,image/webp"
+                                       multiple
+                                       hidden />
+
+                                <button type="button"
+                                        class="btn-select-images"
+                                        id="btn-select-images">
+                                    📷 Chọn ảnh sản phẩm
+                                </button>
+
+                                <small class="image-help-text">
+                                    Ảnh mới sẽ được cộng thêm vào danh sách. Bấm dấu × để xóa ảnh trước khi lưu.
+                                </small>
+
+                                <div id="admin-new-img-preview-wrap" class="admin-img-preview-wrap">
+                                    <div class="admin-img-empty">Chưa chọn ảnh mới nào.</div>
+                                </div>
                             </div>
                         </div>
+
 
                         <div class="admin-form-group">
                             <label for="Badge">Badge</label>
@@ -495,6 +527,135 @@
         </main>
     </div>
 </section>
+<script>
+    let selectedProductImages = [];
+
+    const imageInput = document.getElementById('imageFiles');
+    const selectImagesBtn = document.getElementById('btn-select-images');
+    const newPreviewWrap = document.getElementById('admin-new-img-preview-wrap');
+
+    if (selectImagesBtn && imageInput) {
+        selectImagesBtn.addEventListener('click', function () {
+            imageInput.value = '';
+            imageInput.click();
+        });
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function (event) {
+            const newFiles = Array.from(event.target.files || []);
+
+            newFiles.forEach(file => {
+                if (!file.type.startsWith('image/')) {
+                    return;
+                }
+
+                const isDuplicate = selectedProductImages.some(existing =>
+                    existing.name === file.name &&
+                    existing.size === file.size &&
+                    existing.lastModified === file.lastModified
+                );
+
+                if (!isDuplicate) {
+                    selectedProductImages.push(file);
+                }
+            });
+
+            syncImageInputFiles();
+            renderSelectedImages();
+        });
+    }
+
+    function renderSelectedImages() {
+        if (!newPreviewWrap) return;
+
+        if (selectedProductImages.length === 0) {
+            newPreviewWrap.innerHTML = `
+                <div class="admin-img-empty">
+                    Chưa chọn ảnh mới nào.
+                </div>
+            `;
+            return;
+        }
+
+        newPreviewWrap.innerHTML = '';
+
+        selectedProductImages.forEach((file, index) => {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const item = document.createElement('div');
+                item.className = 'admin-img-preview-item';
+
+                item.innerHTML = `
+                    <button type="button"
+                            class="admin-img-remove-btn"
+                            onclick="removeSelectedImage(${index})"
+                            title="Xóa ảnh này">
+                        ×
+                    </button>
+
+                    <img src="${e.target.result}" alt="${file.name}" />
+
+                    <div class="admin-img-name" title="${file.name}">
+                        ${file.name}
+                    </div>
+
+                    ${index === 0 ? '<span class="admin-preview-main-badge">Ảnh mới</span>' : ''}
+                `;
+
+                newPreviewWrap.appendChild(item);
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeSelectedImage(index) {
+        selectedProductImages.splice(index, 1);
+        syncImageInputFiles();
+        renderSelectedImages();
+    }
+
+    function syncImageInputFiles() {
+        if (!imageInput) return;
+
+        const dataTransfer = new DataTransfer();
+
+        selectedProductImages.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+
+        imageInput.files = dataTransfer.files;
+    }
+
+    function removeExistingImage(imageId) {
+        const imageItem = document.getElementById(`existing-img-${imageId}`);
+        const keepInput = document.getElementById(`keep-img-${imageId}`);
+
+        if (imageItem) {
+            imageItem.remove();
+        }
+
+        if (keepInput) {
+            keepInput.remove();
+        }
+
+        const existingWrap = document.getElementById('existing-images-wrap');
+
+        if (existingWrap && existingWrap.querySelectorAll('.existing-image-item').length === 0) {
+            existingWrap.innerHTML = `
+                <div class="admin-img-empty">
+                    Tất cả ảnh cũ đã được loại khỏi lần cập nhật này.
+                </div>
+            `;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        renderSelectedImages();
+    });
+</script>
 
 <script>
     // Xóa từng ảnh sản phẩm (gọi API /Admin/DeleteImage đã có sẵn)

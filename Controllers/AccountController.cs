@@ -23,71 +23,66 @@ namespace bt1.Controllers
 
         // POST: /Account/Register
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(string username, string email, string password, string confirmPassword, string fullName)
         {
             // Validation
             if (string.IsNullOrWhiteSpace(username))
             {
-                TempData["Error"] = "Tên đăng nhập không được để trống.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Tên đăng nhập không được để trống." });
             }
 
             if (username.Length < 3)
             {
-                TempData["Error"] = "Tên đăng nhập phải từ 3 ký tự trở lên.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Tên đăng nhập phải từ 3 ký tự trở lên." });
             }
 
             if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
             {
-                TempData["Error"] = "Email không hợp lệ.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Email không hợp lệ." });
             }
 
             if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
             {
-                TempData["Error"] = "Mật khẩu phải từ 6 ký tự trở lên.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Mật khẩu phải từ 6 ký tự trở lên." });
             }
 
             if (password != confirmPassword)
             {
-                TempData["Error"] = "Mật khẩu và xác nhận mật khẩu không khớp.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Mật khẩu và xác nhận mật khẩu không khớp." });
             }
 
             if (string.IsNullOrWhiteSpace(fullName))
             {
-                TempData["Error"] = "Họ và tên không được để trống.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Họ và tên không được để trống." });
             }
+
+            // Chuẩn hóa giống lúc lưu để kiểm tra trùng cho chính xác
+            var uname = username.Trim();
+            var mail = email.Trim().ToLower();
 
             // Kiểm tra username đã tồn tại
             var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == username);
+                .FirstOrDefaultAsync(u => u.Username == uname);
 
             if (existingUser != null)
             {
-                TempData["Error"] = "Tên đăng nhập đã tồn tại.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Tên đăng nhập đã tồn tại." });
             }
 
             // Kiểm tra email đã tồn tại
             var existingEmail = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
+                .FirstOrDefaultAsync(u => u.Email == mail);
 
             if (existingEmail != null)
             {
-                TempData["Error"] = "Email đã được đăng ký.";
-                return RedirectToAction(nameof(Register));
+                return Json(new { success = false, message = "Email đã được đăng ký." });
             }
 
             // Tạo user mới
             var user = new User
             {
-                Username = username.Trim(),
-                Email = email.Trim().ToLower(),
+                Username = uname,
+                Email = mail,
                 FullName = fullName.Trim(),
                 PasswordHash = HashPassword(password),
                 IsActive = true,
@@ -95,10 +90,18 @@ namespace bt1.Controllers
             };
 
             _context.Users.Add(user);
-            await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Đăng ký thành công! Vui lòng đăng nhập.";
-            return RedirectToAction("Index", "Home");
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Phòng trường hợp trùng do unique index (username/email)
+                return Json(new { success = false, message = "Tên đăng nhập hoặc email đã tồn tại." });
+            }
+
+            return Json(new { success = true, message = "Đăng ký thành công! Vui lòng đăng nhập." });
         }
 
         // POST: /Account/Login

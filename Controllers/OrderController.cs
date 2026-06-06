@@ -34,7 +34,7 @@ namespace bt1.Controllers
                 .Include(o => o.OrderDetails)
                 .ToListAsync();
 
-            return View("Order_Index", orders);
+            return View("~/Views/Order/Oder_Index.cshtml", orders);
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace bt1.Controllers
             if (order.UserId != userId && userRole != "Admin")
                 return Unauthorized();
 
-            return View("Detail_Index", order);
+            return View("~/Views/Order/Oder_Details.cshtml", order);
         }
 
         /// <summary>

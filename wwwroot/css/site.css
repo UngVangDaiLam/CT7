@@ -1742,6 +1742,8 @@ input, textarea, select {
     padding: 44px 40px 36px;
     width: 100%;
     max-width: 440px;
+    max-height: 90vh;
+    overflow-y: auto;
     position: relative;
     box-shadow: 0 32px 80px rgba(0,0,0,0.4);
     animation: modalSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
@@ -4190,3 +4192,403 @@ input, textarea, select {
     .wl-remove:hover {
         background: #fee2e2;
     }
+
+/* ============================================================
+   CARD SẢN PHẨM PHONG CÁCH MỚI (.pcard)
+   ============================================================ */
+#product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+    gap: 20px;
+}
+
+    #product-grid .col {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+    }
+
+.pcard {
+    background: #fff;
+    border: 1px solid #eef0f3;
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+    .pcard:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.10);
+    }
+
+.pcard-media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+.pcard-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 12px;
+}
+
+.pcard-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: linear-gradient(135deg, #fb923c, #f43f5e);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 8px;
+    z-index: 2;
+}
+
+.pcard-fav {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #f43f5e;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: 0.15s ease;
+    z-index: 2;
+}
+
+    .pcard-fav:hover {
+        transform: scale(1.1);
+    }
+
+    .pcard-fav.active {
+        color: #ef4444;
+    }
+
+.pcard-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.72);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: #ef4444;
+    letter-spacing: 0.5px;
+}
+
+.pcard-body {
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.pcard-cat {
+    font-size: 0.72rem;
+    color: #14b8a6;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.pcard-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    margin: 0;
+    min-height: 2.6em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pcard-price {
+    color: #f43f5e;
+    font-weight: 800;
+    font-size: 1.15rem;
+}
+
+.pcard-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pcard-fast {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.pcard-loc {
+    color: #64748b;
+    font-size: 0.74rem;
+}
+
+.pcard-low {
+    color: #ea580c;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+
+.pcard-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.pcard-rate {
+    color: #f59e0b;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.pcard .btn-buy {
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.84rem;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: 0.18s ease;
+    white-space: nowrap;
+}
+
+    .pcard .btn-buy:hover {
+        transform: translateY(-1px);
+    }
+
+.pcard .btn-buy-disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.pcard-review {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 6px 0 0;
+    text-align: left;
+}
+
+    .pcard-review:hover {
+        color: #0f766e;
+    }
+
+@media (max-width: 640px) {
+    #product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+/ /* ============================================================
+   ADMIN - NEW IMAGE PICKER UI
+   ============================================================ */
+.admin-new-images-block {
+    margin-top: 18px;
+    padding: 20px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    transition: 0.22s ease;
+}
+
+.admin-new-images-block:hover {
+    border-color: #14b8a6;
+    background: linear-gradient(135deg, #ecfdf5, #ffffff);
+}
+
+.admin-image-title {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .admin-image-title::before {
+        content: "🖼️";
+        font-size: 1.15rem;
+    }
+
+.btn-select-images {
+    width: 100%;
+    min-height: 74px;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+    transition: 0.22s ease;
+}
+
+    .btn-select-images:hover {
+        transform: translateY(-2px);
+        border-color: rgba(20, 184, 166, 0.45);
+        color: #0f766e;
+        box-shadow: 0 16px 34px rgba(20, 184, 166, 0.14);
+    }
+
+    .btn-select-images:active {
+        transform: translateY(0);
+    }
+
+.image-help-text {
+    display: block;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.admin-img-preview-wrap {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.admin-img-empty {
+    width: 100%;
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px dashed #cbd5e1;
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 800;
+    text-align: center;
+}
+
+.admin-img-preview-item {
+    position: relative;
+    width: 125px;
+    height: 145px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    animation: imgPreviewIn 0.22s ease;
+}
+
+@keyframes imgPreviewIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.admin-img-preview-item img {
+    width: 100%;
+    height: 102px;
+    object-fit: cover;
+    display: block;
+    background: #f1f5f9;
+}
+
+.admin-img-name {
+    height: 43px;
+    padding: 7px 9px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-img-remove-btn {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    z-index: 5;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.86);
+    color: #ffffff;
+    font-size: 1.05rem;
+    line-height: 1;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: 0.18s ease;
+}
+
+    .admin-img-remove-btn:hover {
+        background: #ef4444;
+        transform: scale(1.08);
+    }
+
+@media (max-width: 576px) {
+    .admin-new-images-block {
+        padding: 14px;
+    }
+
+    .btn-select-images {
+        min-height: 62px;
+        font-size: 0.92rem;
+    }
+
+    .admin-img-preview-item {
+        width: 105px;
+        height: 130px;
+    }
+
+        .admin-img-preview-item img {
+            height: 90px;
+        }
+
+    .admin-img-name {
+        height: 40px;
+    }
+}

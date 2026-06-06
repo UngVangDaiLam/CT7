@@ -1,7 +1,7 @@
 @using Microsoft.AspNetCore.Http
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "HNTS - Trang chủ";
+    ViewData["Title"] = "SDRE - Trang chủ";
 
     // Đọc session để hiện đúng nút Đăng nhập / Đăng xuất (dùng chung cho / và /User)
     var sessionUserId = Context.Session.GetInt32("UserId");
@@ -19,12 +19,26 @@
 <div id="login-modal-overlay" class="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
     <div class="login-modal-box">
 
+        @if (TempData["Error"] != null)
+        {
+            <div class="login-error show" style="display:block; margin-bottom: 14px;">
+                @TempData["Error"]
+            </div>
+        }
+
+        @if (TempData["Success"] != null)
+        {
+            <div style="background:#ecfdf5; color:#15803d; border:1px solid #bbf7d0; border-radius:10px; padding:10px 14px; font-weight:700; margin-bottom:14px;">
+                @TempData["Success"]
+            </div>
+        }
+
         <button class="login-modal-close" id="login-modal-close" type="button" aria-label="Đóng">✕</button>
 
         <div class="login-logo">
             <div class="logo-icon">🛍️</div>
-            <h2>HNTS</h2>
-            <p>Mua sắm dễ dàng, giá tốt mỗi ngày</p>
+            <h2>SDRE</h2>
+            <p>Thiên đường mô hình thu nhỏ, nơi đam mê sưu tầm trở thành hiện thực</p>
         </div>
 
         <!-- TAB BUTTONS -->
@@ -79,12 +93,14 @@
 
         <!-- FORM ĐĂNG KÝ -->
         <div id="register-form-tab" class="login-tab-content" style="display: none;">
-            <form class="login-form" id="quick-register-form" novalidate>
+            <form class="login-form" id="quick-register-form" asp-controller="Account" asp-action="Register" method="post" novalidate>
+                @Html.AntiForgeryToken()
+
                 <div class="form-group">
                     <label for="reg-username">Tên đăng nhập</label>
                     <div class="input-wrap">
                         <span class="input-icon">👤</span>
-                        <input type="text" id="reg-username" name="reg-username"
+                        <input type="text" id="reg-username" name="username"
                                placeholder="Nhập tên đăng nhập (3+ ký tự)" required />
                     </div>
                 </div>
@@ -93,7 +109,7 @@
                     <label for="reg-email">Email</label>
                     <div class="input-wrap">
                         <span class="input-icon">✉️</span>
-                        <input type="email" id="reg-email" name="reg-email"
+                        <input type="email" id="reg-email" name="email"
                                placeholder="Nhập email" required />
                     </div>
                 </div>
@@ -102,7 +118,7 @@
                     <label for="reg-fullname">Họ và tên</label>
                     <div class="input-wrap">
                         <span class="input-icon">👤</span>
-                        <input type="text" id="reg-fullname" name="reg-fullname"
+                        <input type="text" id="reg-fullname" name="fullName"
                                placeholder="Nhập họ và tên" required />
                     </div>
                 </div>
@@ -111,7 +127,7 @@
                     <label for="reg-password">Mật khẩu</label>
                     <div class="input-wrap">
                         <span class="input-icon">🔒</span>
-                        <input type="password" id="reg-password" name="reg-password"
+                        <input type="password" id="reg-password" name="password"
                                placeholder="Nhập mật khẩu (6+ ký tự)" required />
                     </div>
                 </div>
@@ -120,7 +136,7 @@
                     <label for="reg-confirm-password">Xác nhận mật khẩu</label>
                     <div class="input-wrap">
                         <span class="input-icon">🔒</span>
-                        <input type="password" id="reg-confirm-password" name="reg-confirm-password"
+                        <input type="password" id="reg-confirm-password" name="confirmPassword"
                                placeholder="Nhập lại mật khẩu" required />
                     </div>
                 </div>
@@ -149,7 +165,7 @@
             <!-- Logo trái -->
             <a href="/" class="header-logo">
                 <div class="header-logo-mark">🛍️</div>
-                <strong>HNTS</strong>
+                <strong>Scale Dream Replica Emporium</strong>
             </a>
 
             <!-- Search giữa -->
@@ -195,14 +211,14 @@
          ============================================================ -->
     <nav class="main-navigation">
         <div class="container nav-menu">
-            <a href="/" class="nav-link active">Trang chủ</a>
-            <a href="#products-section" class="nav-link">Gundam</a>
-            <a href="#products-section" class="nav-link">Figure</a>
-            <a href="#products-section" class="nav-link">Anime</a>
-            <a href="#products-section" class="nav-link">Dụng cụ</a>
-            <a href="#products-section" class="nav-link">Paint / Decal</a>
-            <a href="#products-section" class="nav-link">Display Base</a>
-            <a href="#products-section" class="nav-link">Phụ kiện</a>
+            <a href="/" class="nav-link active" onclick="return filterByCategory('', this);">Trang chủ</a>
+            <a href="#products-section" class="nav-link" onclick="return filterByCategory('Gundam', this);">Gundam</a>
+            <a href="#products-section" class="nav-link" onclick="return filterByCategory('Figure', this);">Figure</a>
+            <a href="#products-section" class="nav-link" onclick="return filterByCategory('Anime', this);">Anime</a>
+            <a href="#products-section" class="nav-link" onclick="return filterByCategory('Dụng cụ', this);">Dụng cụ</a>
+            <a href="#products-section" class="nav-link" onclick="return filterByCategory('Paint / Decal', this);">Paint / Decal</a>
+            <a href="#products-section" class="nav-link" onclick="return filterByCategory('Display Base', this);">Display Base</a>
+            <a href="#products-section" class="nav-link" onclick="return filterByCategory('Phụ kiện', this);">Phụ kiện</a>
             <a href="#promo-section" class="nav-link">Khuyến mãi</a>
             <a href="#home-about" class="nav-link">Giới thiệu</a>
             <a href="#home-footer" class="nav-link">Liên hệ</a>
@@ -223,12 +239,11 @@
                     <p class="hero-welcome">Welcome to</p>
 
                     <h1>
-                        HNTS <span>STORE</span>
+                        SDRE <span>STORE</span>
                     </h1>
 
                     <p class="hero-desc">
-                        Kho mô hình Gundam, Gunpla, Anime Figure và phụ kiện trưng bày chính hãng.
-                        Sưu tầm dễ dàng, mẫu mã đa dạng, giao hàng nhanh toàn quốc.
+                        Thiên đường mô hình thu nhỏ, nơi đam mê sưu tầm trở thành hiện thực
                     </p>
 
                     <div class="hero-actions">
@@ -289,10 +304,10 @@
         <section id="home-about" class="home-about">
             <div class="container home-about-inner">
                 <div>
-                    <span class="section-tag">Về HNTS</span>
+                    <span class="section-tag">Về SDRE</span>
                     <h2>Mua sắm nhanh, đẹp và tiện lợi</h2>
                     <p>
-                        HNTS hướng đến trải nghiệm mua sắm hiện đại với giao diện dễ dùng,
+                        SDRE hướng đến trải nghiệm mua sắm hiện đại với giao diện dễ dùng,
                         sản phẩm rõ ràng, trạng thái tồn kho minh bạch và giỏ hàng tiện lợi.
                     </p>
                 </div>
@@ -336,7 +351,7 @@
             <div class="container">
                 <div class="footer-grid">
                     <div class="footer-brand">
-                        <div class="logo-text">🛍️ HNTS</div>
+                        <div class="logo-text">🛍️Scale Dream Replica Emporium</div>
                         <p>
                             Website mua sắm trực tuyến hiện đại, hỗ trợ xem sản phẩm,
                             thêm giỏ hàng, đánh giá sản phẩm và quản lý trạng thái hàng hóa.
@@ -364,13 +379,13 @@
                         <h4>Liên hệ</h4>
                         <p><span class="icon">📍</span>Phân khu Đào tạo E1, Khu Công nghệ cao, Phường Tăng Nhơn Phú, Thành phố Thủ Đức, TP. Hồ Chí Minh</p>
                         <p><span class="icon">📞</span>0909 090 909</p>
-                        <p><span class="icon">✉️</span>support@hnts.vn</p>
+                        <p><span class="icon">✉️</span>support@sdre.vn</p>
                         <p><span class="icon">🕐</span>8:00 – 22:00 mỗi ngày</p>
                     </div>
                 </div>
 
                 <div class="footer-bottom">
-                    <p>© 2026 HNTS. Tất cả quyền được bảo lưu.</p>
+                    <p>© 2026 SDRE. Tất cả quyền được bảo lưu.</p>
                     <p>Được tạo với <span class="heart">❤️</span> tại Việt Nam</p>
                 </div>
             </div>

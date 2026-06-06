@@ -189,17 +189,17 @@ function setupRegisterForm() {
             },
             body: `username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&fullName=${encodeURIComponent(fullName)}&password=${encodeURIComponent(password)}&confirmPassword=${encodeURIComponent(confirmPassword)}`
         })
-            .then(r => r.text())
-            .then(html => {
-                if (html.includes('Success') || html.includes('thành công')) {
-                    errorDiv.textContent = '✓ Đăng ký thành công! Vui lòng đăng nhập.';
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    errorDiv.textContent = '✓ ' + (data.message || 'Đăng ký thành công! Vui lòng đăng nhập.');
                     errorDiv.style.color = '#0a0';
                     setTimeout(() => {
                         registerForm.reset();
                         switchLoginTab('login-form-tab');
                     }, 1500);
                 } else {
-                    errorDiv.textContent = 'Đăng ký thất bại. Tên đăng nhập hoặc email có thể đã tồn tại.';
+                    errorDiv.textContent = data.message || 'Đăng ký thất bại.';
                     errorDiv.style.color = '#c33';
                 }
             })
@@ -219,9 +219,9 @@ function setupLogoutBtn() {
         fetch('/Account/Logout', { method: 'POST' })
             .then(() => {
                 localStorage.clear();
-                location.reload();
+                window.location.href = '/';   // ve trang chu thay vi reload /User
             })
-            .catch(err => console.error('Logout error:', err));
+            .catch(() => { window.location.href = '/'; });
     });
 }
 
@@ -575,7 +575,8 @@ function normalizeProduct(product) {
         inStock: status === 'InStock',
         stockQty: Number(product.stockQty) || 0,
         rating: Number(product.rating) || 5,
-        categoryId: product.categoryId || 0
+        categoryId: product.categoryId || 0,
+        categoryName: product.categoryName || ''
     };
 }
 
@@ -627,6 +628,7 @@ function badgeClass(badge) {
 function showLoginModal() {
     const modal = document.getElementById('login-modal-overlay');
     if (!modal) return;
+    modal.style.display = 'flex';   // ghi đè display:none cũ để modal chắc chắn hiện
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
     // Reset form và lỗi
@@ -640,6 +642,7 @@ function hideLoginModal() {
     const modal = document.getElementById('login-modal-overlay');
     if (!modal) return;
     modal.classList.remove('active');
+    modal.style.display = 'none';
     document.body.style.overflow = '';
 }
 
@@ -726,24 +729,9 @@ function handleLogout() {
 
 /** Lấy thông tin user đang đăng nhập */
 function getCurrentUser() {
-    // 1) Thử hệ thống cũ (sessionStorage)
     try {
-        var u = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.user));
-        if (u) return u;
-    } catch { }
-
-    // 2) Fallback: đăng nhập qua server (checkAuthStatus lưu vào localStorage)
-    var sid = localStorage.getItem('userId');
-    if (sid) {
-        return {
-            id: parseInt(sid),
-            userId: parseInt(sid),
-            username: localStorage.getItem('username') || '',
-            fullName: localStorage.getItem('fullName') || '',
-            role: localStorage.getItem('role') || 'User'
-        };
-    }
-    return null;
+        return JSON.parse(sessionStorage.getItem(STORAGE_KEYS.user));
+    } catch { return null; }
 }
 
 /**
@@ -1208,77 +1196,54 @@ function renderUserProducts(products) {
         const isOutOfStock = status === 'OutOfStock';
         const canBuy = status === 'InStock';
 
-        const allImgs = (product.images && product.images.length > 0)
-            ? product.images.slice(0, 5)
-            : [thumbnail];
+        const cat = product.categoryName || 'Mô hình';
+        const lowStock = canBuy && product.stockQty !== undefined && product.stockQty > 0 && product.stockQty <= 10;
 
         return `
     <div class="col" role="listitem">
-      <article class="product-card h-100${!canBuy ? ' out-of-stock' : ''}" data-id="${product.id}">
-        <div class="product-img-wrap">
-          <img src="${thumbnail}" alt="${product.name}" loading="lazy"
-               onerror="this.src='https://picsum.photos/seed/${product.id}/400/300'" class="product-thumbnail">
+      <article class="pcard${!canBuy ? ' pcard-disabled' : ''}" data-id="${product.id}">
+        <div class="pcard-media">
+          ${product.badge ? `<span class="pcard-badge">${product.badge}</span>` : ''}
+          <button class="pcard-fav" type="button" data-fav-id="${product.id}"
+                  onclick="toggleWishlist(${product.id}, this)" title="Yêu thích">♡</button>
 
-          ${product.badge
-                ? `<span class="product-badge ${badgeClass(product.badge)}">${product.badge}</span>`
-                : ''}
+          <img class="pcard-img" src="${thumbnail}" alt="${product.name}" loading="lazy"
+               onerror="this.src='https://picsum.photos/seed/${product.id}/400/300'">
 
           ${isComingSoon
-                ? `<div class="out-of-stock-overlay coming-soon-overlay"><span>SẮP VỀ HÀNG</span></div>`
+                ? `<div class="pcard-overlay">SẮP VỀ HÀNG</div>`
                 : isOutOfStock
-                    ? `<div class="out-of-stock-overlay"><span>HẾT HÀNG</span></div>`
+                    ? `<div class="pcard-overlay">HẾT HÀNG</div>`
                     : ''}
-
-          ${allImgs.length > 1 && canBuy
-                ? `<div class="img-hover-strip">${allImgs.map(img => {
-                    const isActive = img === thumbnail;
-                    return `<img src="${img}" alt="${product.name}" loading="lazy" class="${isActive ? 'active' : ''}"
-                          onclick="changeCardThumbnail(this, '${img}')"
-                          onerror="this.src='https://picsum.photos/seed/${product.id}/400/300'">`;
-                }).join('')}</div>`
-                : ''}
         </div>
 
-        <div class="product-body">
-          <div class="product-rating">${renderStars(product.rating || 0)}</div>
-          <h3 class="product-name">${product.name}</h3>
-          <p class="product-desc">${product.description}</p>
+        <div class="pcard-body">
+          <div class="pcard-cat">${cat}</div>
+          <h3 class="pcard-name">${product.name}</h3>
+          <div class="pcard-price">${formatCurrency(product.price)}</div>
 
-          <div class="product-footer">
-            <span class="product-price">${formatCurrency(product.price)}</span>
+          <div class="pcard-meta">
+            <span class="pcard-fast">🚚 2 Giờ</span>
+            <span class="pcard-loc">📍 Hồ Chí Minh</span>
+          </div>
 
+          ${lowStock ? `<div class="pcard-low">⚠️ Chỉ còn ${product.stockQty} sản phẩm</div>` : ''}
+
+          <div class="pcard-foot">
+            <span class="pcard-rate">⭐ ${product.rating || 5}</span>
             <button class="btn-buy${!canBuy ? ' btn-buy-disabled' : ''}"
-                    data-product-id="${product.id}"
-                    ${!canBuy ? 'disabled' : ''}>
-              ${isComingSoon ? '⏳ Sắp về hàng' : isOutOfStock ? '🚫 Hết hàng' : 'Mua ngay'}
+                    data-product-id="${product.id}" ${!canBuy ? 'disabled' : ''}>
+              ${isComingSoon ? '⏳ Sắp về' : isOutOfStock ? '🚫 Hết hàng' : '🛒 Mua ngay'}
             </button>
           </div>
 
-          ${canBuy && product.stockQty !== undefined && product.stockQty > 0 && product.stockQty <= 10
-                ? `<div class="stock-low">⚠️ Chỉ còn ${product.stockQty} sản phẩm!</div>`
-                : ''}
+          <button class="pcard-review" type="button" onclick="openReviewModal(${product.id})">💬 Đánh giá</button>
         </div>
-     
-        <div class="product-review-summary">
-            ${(() => {
-                const avg = getAverageRating(product.id);
-                const count = getProductReviews(product.id).length;
-
-                if (!avg) {
-                    return `<span>Chưa có đánh giá</span>`;
-                }
-
-                return `<span>⭐ ${avg.toFixed(1)}/5 (${count} đánh giá)</span>`;
-            })()}
-        </div>
-
-        <button class="btn-review" type="button" onclick="openReviewModal(${product.id})">
-            💬 Đánh giá
-        </button>
-
       </article>
     </div>`;
     }).join('');
+
+    markWishlistHearts();
 
     grid.querySelectorAll('.btn-buy:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1300,7 +1265,7 @@ function renderUserProducts(products) {
             btn.style.background = '#22c55e';
 
             setTimeout(() => {
-                btn.textContent = 'Mua ngay';
+                btn.textContent = '🛒 Mua ngay';
                 btn.style.background = '';
             }, 1500);
         });
@@ -1918,6 +1883,20 @@ function refreshWishlistCount() {
         .catch(function () { });
 }
 
+// Tô đỏ tim cho sản phẩm đã yêu thích
+function markWishlistHearts() {
+    fetch('/Wishlist/Ids')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var ids = (data && data.ids) ? data.ids : [];
+            ids.forEach(function (id) {
+                var btn = document.querySelector('.pcard-fav[data-fav-id="' + id + '"]');
+                if (btn) { btn.classList.add('active'); btn.textContent = '❤️'; }
+            });
+        })
+        .catch(function () { });
+}
+
 // Thêm/bỏ yêu thích (gọi từ nút trái tim ở sản phẩm nếu có)
 function toggleWishlist(productId, btn) {
     fetch('/Wishlist/Toggle', {
@@ -1928,7 +1907,8 @@ function toggleWishlist(productId, btn) {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.requireLogin) {
-                alert('Vui lòng đăng nhập để dùng yêu thích.');
+                if (typeof showToast === 'function') showToast('🔒 Vui lòng đăng nhập để dùng yêu thích.', 'error');
+                if (typeof showLoginModal === 'function') showLoginModal();
                 return;
             }
             if (data.success && btn) {
@@ -1939,3 +1919,40 @@ function toggleWishlist(productId, btn) {
         })
         .catch(function () { alert('Lỗi kết nối.'); });
 }
+
+/* ============================================================
+   LỌC SẢN PHẨM THEO THỂ LOẠI (bấm trên menu)
+   ============================================================ */
+var currentCategoryFilter = '';
+
+function filterByCategory(catName, el) {
+    currentCategoryFilter = catName || '';
+
+    var all = (typeof getProducts === 'function') ? getProducts() : [];
+    var list = currentCategoryFilter
+        ? all.filter(function (p) { return (p.categoryName || '') === currentCategoryFilter; })
+        : all;
+
+    if (typeof renderUserProducts === 'function') renderUserProducts(list);
+
+    // Tô đậm mục menu đang chọn
+    document.querySelectorAll('.main-navigation .nav-link').forEach(function (a) {
+        a.classList.remove('active');
+    });
+    if (el) el.classList.add('active');
+
+    // Cuộn xuống khu sản phẩm
+    var sec = document.getElementById('products-section');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+
+    return false;
+}
+
+// An toàn: nhấn Esc luôn đóng modal đăng nhập và mở khóa cuộn trang (ESC luôn mở khóa cuộn)
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        var m = document.getElementById('login-modal-overlay');
+        if (m) { m.classList.remove('active'); m.style.display = 'none'; }
+        document.body.style.overflow = '';
+    }
+});
