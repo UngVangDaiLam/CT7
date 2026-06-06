@@ -22,8 +22,13 @@ namespace bt1.Controllers
 
         public async Task<IActionResult> Index(int? editId)
         {
+            if (!IsAdmin())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             var products = await _context.Products
-                .Include(p => p.Images)
+                        .Include(p => p.Images)
                 .Include(p => p.Category)
                 .Include(p => p.Reviews)
                 .OrderByDescending(p => p.Id)
@@ -430,30 +435,71 @@ namespace bt1.Controllers
         // ====================================================
         // QUẢN LÝ USER
         // ====================================================
-
-        public async Task<IActionResult> Users()
+        /// <summary>
+        /// Mở trang Quản lý danh sách người dùng
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ManageUsers()
         {
             if (!IsAdmin())
+            {
                 return RedirectToAction("Index", "Home");
+            }
 
-            var users = await _context.Users.ToListAsync();
-            return View(users);
+            var users = await _context.Users
+                .OrderByDescending(u => u.Role == "Admin")
+                .ThenBy(u => u.Username)
+                .ToListAsync();
+
+            return View("~/Views/Admin/ManageUsers.cshtml", users);
         }
 
+        /// <summary>
+        /// Thay đổi quyền User/Admin
+        /// </summary>
         [HttpPost]
-        public async Task<IActionResult> ChangeUserRole(int userId, string role)
+        public async Task<IActionResult> ChangeRole(int id, string newRole)
         {
             if (!IsAdmin())
-                return Json(new { success = false, message = "Không có quyền." });
+            {
+                return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
+            }
 
-            var user = await _context.Users.FindAsync(userId);
+            if (newRole != "User" && newRole != "Admin")
+            {
+                return Json(new { success = false, message = "Quyền không hợp lệ." });
+            }
+
+            var user = await _context.Users.FindAsync(id);
+
             if (user == null)
-                return Json(new { success = false, message = "User không tồn tại." });
+            {
+                return Json(new { success = false, message = "Không tìm thấy người dùng." });
+            }
 
-            user.Role = role;
+            var currentUserId = HttpContext.Session.GetInt32("UserId");
+
+            if (currentUserId.HasValue && currentUserId.Value == user.Id && newRole != "Admin")
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Bạn không thể tự hạ quyền Admin của chính mình."
+                });
+            }
+
+            user.Role = newRole;
+            user.UpdatedAt = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Cập nhật role thành công!" });
+            var roleText = newRole == "Admin" ? "Quản trị viên" : "Khách hàng";
+
+            return Json(new
+            {
+                success = true,
+                message = $"Đã đổi quyền tài khoản {user.Username} thành {roleText}."
+            });
         }
 
         // ====================================================

@@ -1,0 +1,89 @@
+﻿@model IEnumerable<bt1.Models.User>
+
+@{
+    ViewData["Title"] = "Quản lý Tài Khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container" style="padding: 40px 0; min-height: 60vh;">
+    <h2 style="margin-bottom: 30px; font-weight: 700; color: #1e293b;">👥 Quản lý Tài khoản Hệ thống</h2>
+
+    <div class="table-responsive" style="background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <table class="table table-hover align-middle" style="margin-bottom: 0;">
+            <thead style="background-color: #f8fafc;">
+                <tr>
+                    <th style="padding: 15px;">ID</th>
+                    <th style="padding: 15px;">Tài khoản</th>
+                    <th style="padding: 15px;">Email / SĐT</th>
+                    <th style="padding: 15px;">Họ và Tên</th>
+                    <th style="padding: 15px; text-align: center;">Quyền hạn</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var user in Model)
+                    {
+                        <tr>
+                            <td style="padding: 15px; font-weight: bold;">#@user.Id</td>
+                            <td style="padding: 15px; color: #3b82f6; font-weight: 600;">@user.Username</td>
+                            <td style="padding: 15px;">
+                                <div>@user.Email</div>
+                                <div style="font-size: 0.85em; color: #64748b;">@user.PhoneNumber</div>
+                            </td>
+                            <td style="padding: 15px;">@user.FullName</td>
+
+                            <td style="padding: 15px; text-align: center;">
+                                <select onchange="changeUserRole(@user.Id, this.value)"
+                                        style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; cursor: pointer; font-weight: 500; background-color: @(user.Role == "Admin" ? "#fef2f2" : "#f0fdf4"); color: @(user.Role == "Admin" ? "#ef4444" : "#16a34a");">
+
+                                    <option value="User" selected="@(user.Role == "User")" style="color: black;">Khách hàng</option>
+                                    <option value="Admin" selected="@(user.Role == "Admin")" style="color: black;">Quản trị viên</option>
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 30px; color: #64748b;">Không có tài khoản nào trong hệ thống.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function changeUserRole(userId, newRole) {
+        if (!confirm('⚠️ Bạn có chắc chắn muốn đổi quyền của người dùng này thành "' + (newRole === 'Admin' ? 'Quản trị viên' : 'Khách hàng') + '" không?')) {
+            location.reload();
+            return;
+        }
+
+        // ĐÃ SỬA: Đổi '/User/ChangeRole' thành '/Admin/ChangeRole'
+        fetch('/Admin/ChangeRole', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${userId}&newRole=${newRole}`
+        })
+            .then(async response => {
+                // Kiểm tra xem server có trả về lỗi 404 hay 500 không
+                if (!response.ok) {
+                    console.error("Lỗi Server:", await response.text());
+                    throw new Error("Mã lỗi: " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message);
+                location.reload(); // Tải lại trang để cập nhật màu sắc mới
+            })
+            .catch(error => {
+                console.error("Chi tiết lỗi:", error);
+                alert("❌ Đã xảy ra lỗi kết nối. Vui lòng nhấn F12, mở tab Console để xem lỗi chi tiết.");
+                location.reload();
+            });
+    }
+</script>
