@@ -20,18 +20,37 @@ namespace bt1.Controllers
         // QUẢN LÝ SẢN PHẨM
         // ====================================================
 
-        public async Task<IActionResult> Index(int? editId)
+        public async Task<IActionResult> Index(int? editId, string search = "", int page = 1,
+            string catSearch = "", int catPage = 1, int? editCatId = null)
         {
             if (!IsAdmin())
             {
                 return RedirectToAction("Index", "Home");
             }
 
-            var products = await _context.Products
-                        .Include(p => p.Images)
+            const int pageSize = 10;
+            search = (search ?? "").Trim();
+
+            var query = _context.Products
+                .Include(p => p.Images)
                 .Include(p => p.Category)
                 .Include(p => p.Reviews)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(p => p.Name.Contains(search));
+            }
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)System.Math.Ceiling(totalCount / (double)pageSize);
+            if (page < 1) page = 1;
+            if (totalPages > 0 && page > totalPages) page = totalPages;
+
+            var products = await query
                 .OrderByDescending(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             var categories = await _context.Categories
@@ -40,6 +59,45 @@ namespace bt1.Controllers
 
             ViewBag.Products = products;
             ViewBag.Categories = categories;
+            ViewBag.Search = search;
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalCount = totalCount;
+
+            // ----- DANH MỤC (tìm kiếm + phân trang riêng) -----
+            catSearch = (catSearch ?? "").Trim();
+
+            var catQuery = _context.Categories
+                .Include(c => c.Products)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(catSearch))
+            {
+                catQuery = catQuery.Where(c => c.Name.Contains(catSearch));
+            }
+
+            var catTotalCount = await catQuery.CountAsync();
+            var catTotalPages = (int)System.Math.Ceiling(catTotalCount / (double)pageSize);
+            if (catPage < 1) catPage = 1;
+            if (catTotalPages > 0 && catPage > catTotalPages) catPage = catTotalPages;
+
+            var categoriesPaged = await catQuery
+                .OrderBy(c => c.Name)
+                .Skip((catPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.CategoriesPaged = categoriesPaged;
+            ViewBag.CatSearch = catSearch;
+            ViewBag.CatCurrentPage = catPage;
+            ViewBag.CatTotalPages = catTotalPages;
+            ViewBag.CatTotalCount = catTotalCount;
+
+            if (editCatId.HasValue)
+            {
+                ViewBag.EditCategory = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.Id == editCatId.Value);
+            }
 
             if (editId.HasValue)
             {
@@ -516,6 +574,113 @@ namespace bt1.Controllers
                 .ToListAsync();
 
             return View(reviews);
+        }
+
+        // ====================================================
+        // QUẢN LÝ DANH MỤC (THỂ LOẠI)
+        // ====================================================
+
+        // Trang danh mục đã gộp vào Admin/Index. Giữ action này để link cũ không lỗi.
+        public IActionResult Categories(string search = "", int page = 1, int? editId = null)
+        {
+            return RedirectToAction(nameof(Index), new { catSearch = search, catPage = page, editCatId = editId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddCategory(string name)
+        {
+            if (!IsAdmin())
+                return RedirectToAction("Index", "Home");
+
+            name = (name ?? "").Trim();
+
+            if (string.IsNullOrEmpty(name))
+            {
+                TempData["CatError"] = "Tên thể loại không được để trống.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var exists = await _context.Categories
+                .AnyAsync(c => c.Name == name);
+
+            if (exists)
+            {
+                TempData["CatError"] = "Thể loại \"" + name + "\" đã tồn tại.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.Categories.Add(new CategoryModel { Name = name });
+            await _context.SaveChangesAsync();
+
+            TempData["CatSuccess"] = "Đã thêm thể loại \"" + name + "\".";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditCategory(int id, string name)
+        {
+            if (!IsAdmin())
+                return RedirectToAction("Index", "Home");
+
+            name = (name ?? "").Trim();
+
+            if (string.IsNullOrEmpty(name))
+            {
+                TempData["CatError"] = "Tên thể loại không được để trống.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            if (category == null)
+            {
+                TempData["CatError"] = "Không tìm thấy thể loại.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var duplicate = await _context.Categories
+                .AnyAsync(c => c.Name == name && c.Id != id);
+            if (duplicate)
+            {
+                TempData["CatError"] = "Đã có thể loại khác tên \"" + name + "\".";
+                return RedirectToAction(nameof(Index));
+            }
+
+            category.Name = name;
+            await _context.SaveChangesAsync();
+
+            TempData["CatSuccess"] = "Đã cập nhật thể loại.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            if (!IsAdmin())
+                return RedirectToAction("Index", "Home");
+
+            var category = await _context.Categories
+                .Include(c => c.Products)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (category == null)
+            {
+                TempData["CatError"] = "Không tìm thấy thể loại.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var productCount = category.Products != null ? category.Products.Count : 0;
+            if (productCount > 0)
+            {
+                TempData["CatError"] = "Không thể xóa \"" + category.Name + "\" vì đang có "
+                    + productCount + " sản phẩm thuộc thể loại này.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            TempData["CatSuccess"] = "Đã xóa thể loại.";
+            return RedirectToAction(nameof(Index));
         }
 
         // ====================================================

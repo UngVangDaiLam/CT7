@@ -4409,6 +4409,7 @@ input, textarea, select {
         gap: 12px;
     }
 }
+
 / /* ============================================================
    ADMIN - NEW IMAGE PICKER UI
    ============================================================ */
@@ -4590,5 +4591,178 @@ input, textarea, select {
 
     .admin-img-name {
         height: 40px;
+    }
+}
+/* ============================================================
+   ADMIN: TÌM KIẾM + PHÂN TRANG + QUẢN LÝ DANH MỤC
+   ============================================================ */
+.admin-card-header-search {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.admin-search-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-search-input {
+    padding: 9px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    min-width: 240px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+    .admin-search-input:focus {
+        border-color: #14b8a6;
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+    }
+
+.admin-search-btn {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+    .admin-search-btn:hover {
+        opacity: 0.92;
+    }
+
+.admin-search-clear {
+    padding: 9px 14px;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+    .admin-search-clear:hover {
+        background: #fee2e2;
+    }
+
+.admin-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 18px 16px;
+}
+
+    .admin-pagination .page-link {
+        min-width: 40px;
+        height: 40px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fff;
+        color: #334155;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+        .admin-pagination .page-link:hover {
+            border-color: #14b8a6;
+            color: #0f766e;
+        }
+
+        .admin-pagination .page-link.active {
+            background: linear-gradient(135deg, #14b8a6, #0f766e);
+            border-color: transparent;
+            color: #fff;
+        }
+
+.cat-form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+    .cat-form-row .admin-search-input {
+        min-width: 280px;
+    }
+
+.btn-cat-cancel {
+    padding: 9px 16px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+    .btn-cat-cancel:hover {
+        background: #e2e8f0;
+    }
+
+.cat-alert {
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.cat-alert-ok {
+    background: #ecfdf5;
+    color: #0f766e;
+    border: 1px solid #a7f3d0;
+}
+
+.cat-alert-err {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.admin-page-head {
+    margin-bottom: 18px;
+}
+
+    .admin-page-head h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 4px;
+    }
+
+    .admin-page-head p {
+        color: #64748b;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+@media (max-width: 640px) {
+    .admin-search-input {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .admin-card-header-search {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

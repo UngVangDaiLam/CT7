@@ -16,6 +16,14 @@
     var totalValue = products.Sum(p => p.Price);
     var outOfStock = products.Count(p => p.Status == "OutOfStock");
     var productFormAction = Url.Action(isEditing ? "EditProduct" : "AddProduct", "Admin");
+
+    // ----- Danh mục (gộp vào trang Admin) -----
+    var categoriesPaged = ViewBag.CategoriesPaged as List<bt1.Category.Category> ?? new List<bt1.Category.Category>();
+    var editCategory = ViewBag.EditCategory as bt1.Category.Category;
+    var isEditingCat = editCategory != null;
+    int catCurPage = ViewBag.CatCurrentPage != null ? (int)ViewBag.CatCurrentPage : 1;
+    int catTotPages = ViewBag.CatTotalPages != null ? (int)ViewBag.CatTotalPages : 1;
+    string catSv = ViewBag.CatSearch as string ?? "";
 }
 
 <section id="admin-page" class="page-section">
@@ -54,6 +62,11 @@
                 <button class="sidebar-link" type="button"
                         onclick="document.getElementById('product-form-section').scrollIntoView({behavior:'smooth'})">
                     <span class="icon">📦</span> Quản lý sản phẩm
+                </button>
+
+                <button class="sidebar-link" type="button"
+                        onclick="document.getElementById('admin-category-section').scrollIntoView({behavior:'smooth'})">
+                    <span class="icon">🗂️</span> Quản lý danh mục
                 </button>
 
                 <button class="sidebar-link" type="button" onclick="window.location.href='/Admin/ManageUsers'">
@@ -412,8 +425,18 @@
 
             <!-- PRODUCTS TABLE -->
             <div class="admin-card">
-                <div class="admin-card-header">
-                    <h3>📋 Danh sách sản phẩm</h3>
+                <div class="admin-card-header admin-card-header-search">
+                    <h3>📋 Danh sách sản phẩm (@(ViewBag.TotalCount ?? 0))</h3>
+
+                    <form asp-controller="Admin" asp-action="Index" method="get" class="admin-search-form">
+                        <input type="text" name="search" value="@(ViewBag.Search as string)"
+                               placeholder="🔍 Tìm theo tên sản phẩm..." class="admin-search-input" />
+                        <button type="submit" class="admin-search-btn">Tìm</button>
+                        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                        {
+                            <a asp-action="Index" class="admin-search-clear">✕ Xóa lọc</a>
+                        }
+                    </form>
                 </div>
 
                 <div class="admin-card-body" style="padding:0;">
@@ -526,8 +549,161 @@
 
                         </table>
                     </div>
+
+                    @{
+                        int curPage = ViewBag.CurrentPage != null ? (int)ViewBag.CurrentPage : 1;
+                        int totPages = ViewBag.TotalPages != null ? (int)ViewBag.TotalPages : 1;
+                        string sv = ViewBag.Search as string ?? "";
+                    }
+                    @if (totPages > 1)
+                    {
+                        <nav class="admin-pagination" aria-label="Phân trang sản phẩm">
+                            @if (curPage > 1)
+                            {
+                                <a asp-action="Index" asp-route-search="@sv" asp-route-page="@(curPage - 1)" class="page-link">‹ Trước</a>
+                            }
+                            @for (int i = 1; i <= totPages; i++)
+                            {
+                                <a asp-action="Index" asp-route-search="@sv" asp-route-page="@i" class="page-link @(i == curPage ? "active" : "")">@i</a>
+                            }
+                            @if (curPage < totPages)
+                            {
+                                <a asp-action="Index" asp-route-search="@sv" asp-route-page="@(curPage + 1)" class="page-link">Sau ›</a>
+                            }
+                        </nav>
+                    }
                 </div>
             </div>
+
+            <!-- ========== QUẢN LÝ DANH MỤC (gộp chung trang) ========== -->
+            <div id="admin-category-section" style="margin-top:8px;">
+
+                @if (TempData["CatSuccess"] != null)
+                {
+                    <div class="cat-alert cat-alert-ok">✅ @TempData["CatSuccess"]</div>
+                }
+                @if (TempData["CatError"] != null)
+                {
+                    <div class="cat-alert cat-alert-err">⚠️ @TempData["CatError"]</div>
+                }
+
+                <!-- FORM THÊM / SỬA DANH MỤC -->
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3>@(isEditingCat ? "✏️ Sửa thể loại" : "🗂️ Thêm thể loại mới")</h3>
+                    </div>
+                    <div class="admin-card-body">
+                        @if (isEditingCat)
+                        {
+                            <form asp-controller="Admin" asp-action="EditCategory" method="post" class="cat-form">
+                                <input type="hidden" name="id" value="@editCategory!.Id" />
+                                <div class="cat-form-row">
+                                    <input type="text" name="name" value="@editCategory.Name" class="admin-search-input" placeholder="Tên thể loại..." required />
+                                    <button type="submit" class="btn-admin-primary">💾 Cập nhật</button>
+                                    <a asp-action="Index" class="btn-cat-cancel">✕ Hủy</a>
+                                </div>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-controller="Admin" asp-action="AddCategory" method="post" class="cat-form">
+                                <div class="cat-form-row">
+                                    <input type="text" name="name" class="admin-search-input" placeholder="Ví dụ: Gundam, Figure, Anime..." required />
+                                    <button type="submit" class="btn-admin-primary">➕ Thêm thể loại</button>
+                                </div>
+                            </form>
+                        }
+                    </div>
+                </div>
+
+                <!-- BẢNG DANH MỤC -->
+                <div class="admin-card">
+                    <div class="admin-card-header admin-card-header-search">
+                        <h3>📋 Danh sách thể loại (@(ViewBag.CatTotalCount ?? 0))</h3>
+                        <form asp-controller="Admin" asp-action="Index" method="get" class="admin-search-form">
+                            <input type="text" name="catSearch" value="@catSv" placeholder="🔍 Tìm thể loại..." class="admin-search-input" />
+                            <button type="submit" class="admin-search-btn">Tìm</button>
+                            @if (!string.IsNullOrEmpty(catSv))
+                            {
+                                <a asp-action="Index" class="admin-search-clear">✕ Xóa lọc</a>
+                            }
+                        </form>
+                    </div>
+                    <div class="admin-card-body" style="padding:0;">
+                        <div class="products-table-wrap">
+                            <table class="products-table table table-hover table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Tên thể loại</th>
+                                        <th scope="col">Số sản phẩm</th>
+                                        <th scope="col">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (categoriesPaged.Any())
+                                    {
+                                        foreach (var cat in categoriesPaged)
+                                        {
+                                            var pc = cat.Products != null ? cat.Products.Count : 0;
+                                            <tr>
+                                                <td>@cat.Id</td>
+                                                <td class="table-name">@cat.Name</td>
+                                                <td><span class="stock-badge stock-in">@pc sản phẩm</span></td>
+                                                <td>
+                                                    <div style="display:flex;gap:8px;align-items:center;">
+                                                        <a href="/Admin?catSearch=@catSv&catPage=@catCurPage&editCatId=@cat.Id#admin-category-section" class="btn-edit" style="text-decoration:none;">✏️ Sửa</a>
+                                                        <form asp-controller="Admin" asp-action="DeleteCategory" method="post" onsubmit="return confirm('Xóa thể loại này?');">
+                                                            <input type="hidden" name="id" value="@cat.Id" />
+                                                            <button type="submit" class="btn-delete">🗑 Xóa</button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="4">
+                                                <div class="empty-state">
+                                                    <div class="empty-icon">🗂️</div>
+                                                    <p>Chưa có thể loại nào@(string.IsNullOrEmpty(catSv) ? "." : " khớp tìm kiếm.")</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (catTotPages > 1)
+                        {
+                            <nav class="admin-pagination" aria-label="Phân trang danh mục">
+                                @if (catCurPage > 1)
+                                {
+                                    <a href="/Admin?catSearch=@catSv&catPage=@(catCurPage - 1)#admin-category-section" class="page-link">‹ Trước</a>
+                                }
+                                @for (int i = 1; i <= catTotPages; i++)
+                                {
+                                    <a href="/Admin?catSearch=@catSv&catPage=@i#admin-category-section" class="page-link @(i == catCurPage ? "active" : "")">@i</a>
+                                }
+                                @if (catCurPage < catTotPages)
+                                {
+                                    <a href="/Admin?catSearch=@catSv&catPage=@(catCurPage + 1)#admin-category-section" class="page-link">Sau ›</a>
+                                }
+                            </nav>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @if (isEditingCat || !string.IsNullOrEmpty(catSv))
+            {
+                <script>
+                                document.getElementById('admin-category-section')?.scrollIntoView({ behavior: 'smooth' });
+                </script>
+            }
 
         </main>
     </div>

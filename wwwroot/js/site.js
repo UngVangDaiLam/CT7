@@ -32,6 +32,17 @@ function checkAuthStatus() {
                 localStorage.setItem('username', data.username);
                 localStorage.setItem('fullName', data.fullName);
                 localStorage.setItem('role', data.role);
+
+                // Đồng bộ thêm sessionStorage để các hàm cũ đọc được user
+                if (typeof STORAGE_KEYS !== 'undefined') {
+                    sessionStorage.setItem(STORAGE_KEYS.user, JSON.stringify({
+                        id: data.userId,
+                        userId: data.userId,
+                        username: data.username,
+                        fullName: data.fullName,
+                        role: data.role
+                    }));
+                }
             } else {
                 if (loginWrap) loginWrap.style.display = 'block';
                 if (logoutWrap) logoutWrap.style.display = 'none';
@@ -39,6 +50,9 @@ function checkAuthStatus() {
                 localStorage.removeItem('username');
                 localStorage.removeItem('fullName');
                 localStorage.removeItem('role');
+                if (typeof STORAGE_KEYS !== 'undefined') {
+                    sessionStorage.removeItem(STORAGE_KEYS.user);
+                }
             }
         })
         .catch(err => console.error('Lỗi kiểm tra đăng nhập:', err));
@@ -92,45 +106,8 @@ function setupLoginForm() {
         return;
     }
 
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        const errorDiv = document.getElementById('login-error');
-
-        if (!username || !password) {
-            errorDiv.textContent = 'Vui lòng nhập tên đăng nhập và mật khẩu.';
-            errorDiv.style.color = '#c33';
-            return;
-        }
-
-        fetch('/Account/Login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    errorDiv.textContent = '';
-                    closeLoginModal();
-                    setTimeout(() => {
-                        checkAuthStatus();
-                        location.reload();
-                    }, 300);
-                } else {
-                    errorDiv.textContent = data.message || 'Đăng nhập thất bại.';
-                    errorDiv.style.color = '#c33';
-                }
-            })
-            .catch(err => {
-                errorDiv.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
-                console.error('Login error:', err);
-            });
-    });
+    // Gắn bằng onsubmit để tránh bị submit nhiều lần do file có nhiều DOMContentLoaded
+    loginForm.onsubmit = handleLogin;
 }
 
 // Xử lý Register (modal)
@@ -382,7 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-checkout')?.addEventListener('click', checkoutCart);
 
     // Login modal – form submit
-    document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+    // Đã xử lý trong setupLoginForm(), không gắn thêm để tránh submit nhiều lần
+    // document.getElementById('login-form')?.addEventListener('submit', handleLogin);
 
     // Khởi tạo trang
     const isAdminPage = document.getElementById('admin-page') !== null;
@@ -664,6 +642,7 @@ function handleLogin(event) {
 
     fetch('/Account/Login', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
@@ -672,9 +651,25 @@ function handleLogin(event) {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
+                const role = data.role || 'User';
+                const userData = {
+                    id: data.userId,
+                    userId: data.userId,
+                    username: data.username || username,
+                    fullName: data.fullName || data.username || username,
+                    role: role
+                };
+
+                // Lưu cả client storage để các hàm cũ như getCurrentUser() vẫn chạy đúng
+                sessionStorage.setItem(STORAGE_KEYS.user, JSON.stringify(userData));
+                localStorage.setItem('userId', data.userId || '');
+                localStorage.setItem('username', data.username || username);
+                localStorage.setItem('fullName', data.fullName || data.username || username);
+                localStorage.setItem('role', role);
+
                 hideLoginModal();
 
-                if (data.role === 'Admin') {
+                if (role === 'Admin') {
                     window.location.href = '/Admin';
                 } else {
                     window.location.href = '/User';
@@ -730,8 +725,20 @@ function handleLogout() {
 /** Lấy thông tin user đang đăng nhập */
 function getCurrentUser() {
     try {
-        return JSON.parse(sessionStorage.getItem(STORAGE_KEYS.user));
-    } catch { return null; }
+        const sessionUser = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.user));
+        if (sessionUser) return sessionUser;
+    } catch { }
+
+    const userId = localStorage.getItem('userId');
+    if (!userId) return null;
+
+    return {
+        id: userId,
+        userId: userId,
+        username: localStorage.getItem('username') || '',
+        fullName: localStorage.getItem('fullName') || localStorage.getItem('username') || '',
+        role: localStorage.getItem('role') || 'User'
+    };
 }
 
 /**
@@ -755,6 +762,44 @@ function updateNavbarAuthState() {
     } else {
         if (loginWrap) loginWrap.style.display = '';
         if (logoutWrap) logoutWrap.style.display = 'none';
+    }
+}
+
+async function getCurrentUserFromServer() {
+    try {
+        const res = await fetch('/Account/CheckAuth', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+
+        const data = await res.json();
+
+        if (data.isLoggedIn) {
+            localStorage.setItem('userId', data.userId);
+            localStorage.setItem('username', data.username || '');
+            localStorage.setItem('fullName', data.fullName || '');
+            localStorage.setItem('role', data.role || '');
+            sessionStorage.setItem(STORAGE_KEYS.user, JSON.stringify({
+                id: data.userId,
+                userId: data.userId,
+                username: data.username || '',
+                fullName: data.fullName || data.username || '',
+                role: data.role || 'User'
+            }));
+
+            return data;
+        }
+
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        localStorage.removeItem('fullName');
+        localStorage.removeItem('role');
+        sessionStorage.removeItem(STORAGE_KEYS.user);
+
+        return null;
+    } catch (error) {
+        console.error('Check auth error:', error);
+        return null;
     }
 }
 
@@ -922,7 +967,7 @@ function removeFromCart(productId) {
 }
 
 /** Thanh toán đơn hàng */
-function checkoutCart() {
+async function checkoutCart() {
     const cart = getCart();
     if (cart.length === 0) {
         showToast('⚠️ Giỏ hàng trống!', 'error');
@@ -960,14 +1005,14 @@ function checkoutCart() {
     closeCartDrawer();
 
     // Render lại giao diện
-    const user = getCurrentUser();
+    const user = await getCurrentUserFromServer();
 
     const isAdminPage = document.getElementById('admin-page') !== null;
     const isUserPage = document.getElementById('user-page') !== null;
     const isLoginPage = document.getElementById('login-form') !== null && !isAdminPage && !isUserPage;
 
     if (isAdminPage) {
-        if (!user || user.role !== 'admin') {
+        if (!user || user.role !== 'Admin') {
             window.location.href = '/';
             return;
         }
@@ -985,12 +1030,12 @@ function checkoutCart() {
     }
 
     if (isLoginPage) {
-        if (user && user.role === 'admin') {
+        if (user && user.role === 'Admin') {
             window.location.href = '/admin';
             return;
         }
 
-        if (user && user.role === 'user') {
+        if (user && user.role === 'User') {
             window.location.href = '/user';
             return;
         }
@@ -1246,9 +1291,10 @@ function renderUserProducts(products) {
     markWishlistHearts();
 
     grid.querySelectorAll('.btn-buy:not([disabled])').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const id = parseInt(btn.dataset.productId);
-            const user = getCurrentUser();
+
+            const user = await getCurrentUserFromServer();
 
             if (!user) {
                 showToast('🔒 Vui lòng đăng nhập để mua hàng!', 'error');
@@ -1735,7 +1781,8 @@ function scrollUserTop() {
 document.addEventListener('DOMContentLoaded', () => {
 
     // Login modal – form submit
-    document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+    // Đã xử lý trong setupLoginForm(), không gắn thêm để tránh submit nhiều lần
+    // document.getElementById('login-form')?.addEventListener('submit', handleLogin);
 
     // Đóng modal khi click backdrop
     document.getElementById('login-modal-overlay')?.addEventListener('click', (e) => {
